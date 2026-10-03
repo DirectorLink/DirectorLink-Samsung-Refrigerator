@@ -1,8 +1,9 @@
 """Generate the Navigator tile icons and Composer device images.
 
 Style matches the stock Control4 "Experience Button" icons: a gray disc with a
-colored glow ring. One icon set per feature tile:
+colored glow ring. One icon set per tile:
 
+  refrigerator  refrigerator        status tile (primary proxy) - states ok, door, pending, error, unknown
   sabbath       Shabbat candles     (gold when on)
   power_cool    thermometer + arrow (cyan when on)
   power_freeze  snowflake           (blue when on)
@@ -11,6 +12,11 @@ colored glow ring. One icon set per feature tile:
 States (the uibutton proxy picks the icon by state id):
   on, off, pending (white ring + dots), error (red ring + "!"),
   unavailable (faded glyph with a slash - feature not supported by the model)
+Status tile states:
+  ok (green ring), door (amber ring, door drawn open), pending, error, unknown (gray ring)
+
+Composer images: icons/device_sm.png / device_lg.png (the driver) and
+icons/<tile>/device_sm.png / device_lg.png (each proxy).
 
 Usage:  python scripts/make_icons.py
 """
@@ -27,11 +33,15 @@ SS = 4          # supersampling factor
 BASE = 300      # design grid
 
 FEATURES = {
+    "refrigerator": (60, 200, 110),
     "sabbath": (255, 190, 40),
     "power_cool": (40, 210, 255),
     "power_freeze": (70, 120, 255),
     "ice_maker": (120, 235, 230),
 }
+STATUS_STATES = ("ok", "door", "pending", "error", "unknown")
+STATUS_RING = {"ok": (60, 200, 110), "door": (255, 165, 0), "pending": (235, 235, 235),
+               "error": (230, 40, 40), "unknown": (95, 95, 95)}
 RING = {"off": (95, 95, 95), "pending": (235, 235, 235), "error": (230, 40, 40), "unavailable": (80, 80, 80)}
 GLYPH_OFF = (238, 238, 238, 255)
 
@@ -136,7 +146,31 @@ def glyph_ice_maker(W, k, lit, color):
     return layer
 
 
-GLYPHS = {"sabbath": glyph_sabbath, "power_cool": glyph_power_cool,
+def glyph_refrigerator(W, k, door_open, color):
+    layer = Image.new("RGBA", (W, W), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    body, line, handle = (246, 246, 246, 255), (150, 150, 155, 255), (175, 175, 180, 255)
+    lw = max(1, S(4, k))
+    d.rounded_rectangle([S(98, k), S(58, k), S(202, k), S(240, k)], radius=S(12, k), fill=body)
+    d.line([(S(98, k), S(172, k)), (S(202, k), S(172, k))], fill=line, width=lw)      # doors | drawers
+    d.line([(S(98, k), S(206, k)), (S(202, k), S(206, k))], fill=line, width=lw)      # drawer split
+    d.line([(S(150, k), S(58, k)), (S(150, k), S(172, k))], fill=line, width=lw)      # French doors
+    for y in (189, 223):                                                              # drawer handles
+        d.rounded_rectangle([S(128, k), S(y - 3, k), S(172, k), S(y + 3, k)], radius=S(3, k), fill=handle)
+    d.rounded_rectangle([S(156, k), S(92, k), S(162, k), S(140, k)], radius=S(3, k), fill=handle)
+    if door_open:
+        # left door swung open: dark interior with a shelf, door panel outside
+        d.rectangle([S(102, k), S(62, k), S(148, k), S(170, k)], fill=(70, 74, 80, 255))
+        d.line([(S(104, k), S(116, k)), (S(146, k), S(116, k))], fill=(200, 200, 205, 255), width=lw)
+        d.polygon([(S(98, k), S(58, k)), (S(62, k), S(72, k)), (S(62, k), S(160, k)), (S(98, k), S(172, k))],
+                  fill=body, outline=line)
+        d.rounded_rectangle([S(70, k), S(100, k), S(75, k), S(132, k)], radius=S(2, k), fill=handle)
+    else:
+        d.rounded_rectangle([S(138, k), S(92, k), S(144, k), S(140, k)], radius=S(3, k), fill=handle)
+    return layer
+
+
+GLYPHS = {"refrigerator": glyph_refrigerator, "sabbath": glyph_sabbath, "power_cool": glyph_power_cool,
           "power_freeze": glyph_power_freeze, "ice_maker": glyph_ice_maker}
 
 
@@ -151,16 +185,17 @@ def make_icon(feature, state, size):
     ImageDraw.Draw(shadow).ellipse([S(22, k), S(28, k), S(282, k), S(288, k)], fill=(0, 0, 0, 110))
     img = Image.alpha_composite(img, shadow.filter(ImageFilter.GaussianBlur(S(6, k))))
 
-    ring = color if state == "on" else RING[state]
+    status = feature == "refrigerator"
+    ring = STATUS_RING[state] if status else (color if state == "on" else RING[state])
     ringimg = Image.new("RGBA", (W, W), (0, 0, 0, 0))
     ImageDraw.Draw(ringimg).ellipse([S(14, k), S(14, k), S(286, k), S(286, k)], fill=ring + (255,))
-    if state in ("on", "pending", "error"):
+    if state in ("on", "ok", "door", "pending", "error"):
         img = Image.alpha_composite(img, ringimg.filter(ImageFilter.GaussianBlur(S(5, k))))
     img = Image.alpha_composite(img, ringimg)
     img = Image.alpha_composite(img, gradient_disc(W, [S(36, k), S(36, k), S(264, k), S(264, k)],
                                                    (165, 165, 165), (95, 95, 95)))
 
-    glyph = GLYPHS[feature](W, k, state == "on", color)
+    glyph = GLYPHS[feature](W, k, (state == "door") if status else (state == "on"), color)
     if state == "unavailable":
         r, g, b, a = glyph.split()
         glyph = Image.merge("RGBA", (r, g, b, a.point(lambda v: v * 35 // 100)))
@@ -186,11 +221,15 @@ def main():
     for feature in FEATURES:
         folder = ICON_DIR / feature
         folder.mkdir(parents=True, exist_ok=True)
-        for state in STATES:
+        states = STATUS_STATES if feature == "refrigerator" else STATES
+        for state in states:
             for size in SIZES:
                 make_icon(feature, state, size).save(folder / f"{state}_{size}.png", optimize=True)
-    make_icon("power_freeze", "on", 32).save(ICON_DIR / "device_lg.png", optimize=True)
-    make_icon("power_freeze", "on", 16).save(ICON_DIR / "device_sm.png", optimize=True)
+        shown = "ok" if feature == "refrigerator" else "on"
+        make_icon(feature, shown, 32).save(folder / "device_lg.png", optimize=True)
+        make_icon(feature, shown, 16).save(folder / "device_sm.png", optimize=True)
+    make_icon("refrigerator", "ok", 32).save(ICON_DIR / "device_lg.png", optimize=True)
+    make_icon("refrigerator", "ok", 16).save(ICON_DIR / "device_sm.png", optimize=True)
     print(f"Icons written to {ICON_DIR}")
 
 

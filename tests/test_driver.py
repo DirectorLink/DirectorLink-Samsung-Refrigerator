@@ -348,7 +348,7 @@ class Driver:
         return self.g.TestCondition(name, self.rt.table_from({"LOGIC": logic, "VALUE": value}))
 
 
-TILE = {"powerCool": (5001, 300), "powerFreeze": (5002, 301), "sabbath": (5003, 302), "iceMaker": (5004, 303)}
+TILE = {"powerCool": (5002, 300), "powerFreeze": (5003, 301), "sabbath": (5004, 302), "iceMaker": (5005, 303)}
 
 
 def configured_driver(rt_mod, cloud=None):
@@ -466,12 +466,12 @@ def test_unconfigured_startup(rt_mod):
     d.init()
     assert "Not configured" in d.prop("Driver Status")
     assert d.prop("Authorization Status") == "Not authorized"
-    assert d.icon(5003) == "off"
-    d.tap(5003)
+    assert d.icon(5004) == "off"
+    d.tap(5004)
     assert d.events() == ["Command Failed"]
-    assert d.icon(5003) == "error" and d.icon(5001) == "off"   # only the tapped tile flashes
+    assert d.icon(5004) == "error" and d.icon(5002) == "off"   # only the tapped tile flashes
     d.advance(20000)
-    assert d.icon(5003) == "off"
+    assert d.icon(5004) == "off"
 
 
 def test_full_setup_flow(rt_mod):
@@ -503,7 +503,7 @@ def test_full_setup_flow(rt_mod):
         assert name in d.prop("Supported Features"), d.prop("Supported Features")
     assert d.prop("Connection") == "Online" and d.prop("Driver Status") == "OK"
     assert d.var("ICE_MAKER") == "1" and d.var("SABBATH_MODE") == "0" and d.var("FRIDGE_SETPOINT") == "37"
-    assert d.icon(5004) == "on" and d.icon(5003) == "off"
+    assert d.icon(5005) == "on" and d.icon(5004) == "off"
     assert d.events() == []        # first observation fires nothing
     joined = "\n".join(lua_to_py(d.M.prints) or [])
     for secret in [auth["access_token"], auth["refresh_token"], "secret-xyz", PAT]:
@@ -513,13 +513,13 @@ def test_full_setup_flow(rt_mod):
 def test_tap_with_confirmation_and_conditions(rt_mod):
     d, cloud = configured_driver(rt_mod)
     cloud.flip_after_reads = 1     # first confirmation read still shows the old state
-    d.tap(5003)
+    d.tap(5004)
     assert cloud.commands[-1] == {"commands": [{"component": "main", "capability": "samsungce.sabbathMode", "command": "on"}]}
-    assert d.icon(5003) == "pending" and d.prop("Sabbath Mode") == "Turning On..."
+    assert d.icon(5004) == "pending" and d.prop("Sabbath Mode") == "Turning On..."
     d.advance(3000)
-    assert d.icon(5003) == "pending"
+    assert d.icon(5004) == "pending"
     d.advance(7000)
-    assert d.icon(5003) == "on" and d.led(302) == "1" and d.var("SABBATH_MODE") == "1"
+    assert d.icon(5004) == "on" and d.led(302) == "1" and d.var("SABBATH_MODE") == "1"
     assert d.events() == ["Sabbath Mode Turned On"]
     assert d.cond("SABBATH_MODE", "On") is True and d.cond("SABBATH_MODE", "On", "NOT_EQUAL") is False
     d.command("SET_FEATURE", Feature="Sabbath Mode", State="Toggle")
@@ -532,18 +532,18 @@ def test_tap_with_confirmation_and_conditions(rt_mod):
     d.command("SET_FEATURE", Feature="Ice Maker", State="Off")
     assert cloud.commands[-1]["commands"][0] == {"component": "icemaker", "capability": "switch", "command": "off"}
     d.advance(10000)
-    assert d.prop("Ice Maker") == "Off" and d.icon(5004) == "off"
+    assert d.prop("Ice Maker") == "Off" and d.icon(5005) == "off"
     assert d.events() == ["Sabbath Mode Turned On", "Sabbath Mode Turned Off", "Power Cool Turned On", "Ice Maker Turned Off"]
 
 
 def test_two_commands_in_flight(rt_mod):
     d, cloud = configured_driver(rt_mod)
-    d.tap(5001)
     d.tap(5002)
-    assert d.icon(5001) == "pending" and d.icon(5002) == "pending"
+    d.tap(5003)
+    assert d.icon(5002) == "pending" and d.icon(5003) == "pending"
     d.advance(15000)
     assert d.prop("Power Cool") == "On" and d.prop("Power Freeze") == "On"
-    assert d.icon(5001) == "on" and d.icon(5002) == "on"
+    assert d.icon(5002) == "on" and d.icon(5003) == "on"
 
 
 def test_setpoint_from_property_and_command(rt_mod):
@@ -576,7 +576,7 @@ def test_onedoor_and_dongle_variants(rt_mod):
     assert d.prop("Fridge Setpoint") == f"5 {DEG}C"
 
     d, cloud = pat_driver(rt_mod, "da_ref_normal_100001")
-    d.tap(5001)
+    d.tap(5002)
     assert cloud.commands[-1]["commands"][0] == {"component": "main", "capability": "refrigeration",
                                                  "command": "setRapidCooling", "arguments": ["on"]}
     d.advance(15000)
@@ -585,24 +585,24 @@ def test_onedoor_and_dongle_variants(rt_mod):
 
 def test_unavailable_feature(rt_mod):
     d, cloud = pat_driver(rt_mod, "da_ref_normal_01001")      # Family Hub: Sabbath disabled
-    assert d.prop("Sabbath Mode") == "Not available" and d.icon(5003) == "unavailable"
+    assert d.prop("Sabbath Mode") == "Not available" and d.icon(5004) == "unavailable"
     assert "Sabbath" not in d.prop("Supported Features")
-    d.tap(5003)
+    d.tap(5004)
     assert cloud.commands == [] and d.events() == ["Command Failed"]
     assert "not available" in d.prop("Driver Status")
     d.advance(20000)
-    assert d.icon(5003) == "unavailable"
+    assert d.icon(5004) == "unavailable"
 
 
 def test_command_not_confirmed(rt_mod):
     d, cloud = configured_driver(rt_mod)
     cloud.ignore_commands = True
-    d.tap(5003)
+    d.tap(5004)
     d.advance(60000)
     assert d.events() == ["Command Failed"] and "not confirmed" in d.prop("Driver Status")
-    assert d.prop("Sabbath Mode") == "Off" and d.icon(5003) == "error"
+    assert d.prop("Sabbath Mode") == "Off" and d.icon(5004) == "error"
     d.advance(20000)
-    assert d.icon(5003) == "off"
+    assert d.icon(5004) == "off"
 
 
 def test_doors_and_left_open_alert(rt_mod):
@@ -656,7 +656,7 @@ def test_expired_access_token_renews_and_retries(rt_mod):
     d, cloud = configured_driver(rt_mod)
     old_refresh = d.persisted_auth()["refresh_token"]
     cloud.expire_all_access_tokens()
-    d.tap(5003)
+    d.tap(5004)
     d.advance(10000)
     assert cloud.attr("main", "samsungce.sabbathMode", "status") == "on"
     new = d.persisted_auth()
@@ -681,13 +681,13 @@ def test_proactive_renewal_and_restart(rt_mod):
     d.advance(21 * 3600 * 1000)
     assert len([r for r in cloud.token_requests if r["grant_type"] == "refresh_token"]) >= 1
     assert d.persisted_auth()["expires_at"] - d.M.now > 20 * 3600
-    d.tap(5001)
+    d.tap(5002)
     d.advance(10000)
     d2 = Driver(rt_mod, cloud, persist_py=lua_to_py(d.M.persist))
     for k in ("Device ID", "OAuth Client ID", "OAuth Client Secret"):
         d2.g.Properties[k] = d.prop(k)
     d2.init()
-    assert d2.icon(5001) == "on" and d2.icon(5004) == "on"   # last known states shown immediately
+    assert d2.icon(5002) == "on" and d2.icon(5005) == "on"   # last known states shown immediately
     d2.advance(6000)
     assert d2.prop("Power Cool") == "On" and d2.prop("Connection") == "Online"
     assert d2.events() == []
@@ -699,9 +699,9 @@ def test_renewal_rejected_requires_reauth(rt_mod):
     d.action("RenewToken")
     assert "Authorization Required" in d.events()
     assert "Re-authorization required" in d.prop("Authorization Status")
-    assert d.icon(5003) == "error" and d.persisted_auth() in ({}, None, [])
+    assert d.icon(5004) == "error" and d.persisted_auth() in ({}, None, [])
     d.set_property("Authorization Code", cloud.authorize(d.prop("Authorization URL")))
-    assert d.prop("Authorization Status").startswith("Authorized") and d.icon(5003) == "off"
+    assert d.prop("Authorization Status").startswith("Authorized") and d.icon(5004) == "off"
 
 
 def test_transient_renewal_failure_retries(rt_mod):
@@ -722,10 +722,10 @@ def test_offline_events(rt_mod):
     cloud.health = "OFFLINE"
     d.advance(2 * 60 * 1000)
     assert d.events() == ["Refrigerator Offline"] and d.prop("Connection") == "Offline"
-    assert d.icon(5003) == "error" and d.cond("CONNECTION", "Offline")
+    assert d.icon(5004) == "error" and d.cond("CONNECTION", "Offline")
     cloud.health = "ONLINE"
     d.advance(2 * 60 * 1000)
-    assert d.events() == ["Refrigerator Offline", "Refrigerator Online"] and d.icon(5003) == "off"
+    assert d.events() == ["Refrigerator Offline", "Refrigerator Online"] and d.icon(5004) == "off"
 
 
 def test_external_change_detected_by_poll(rt_mod):
@@ -734,13 +734,13 @@ def test_external_change_detected_by_poll(rt_mod):
     cloud.set_attr("main", "samsungce.powerFreeze", "activated", True)
     d.advance(2 * 60 * 1000)
     assert d.events() == ["Power Freeze Turned On", "Sabbath Mode Turned On"]
-    assert d.icon(5003) == "on" and d.icon(5002) == "on"
+    assert d.icon(5004) == "on" and d.icon(5003) == "on"
 
 
 def test_network_down(rt_mod):
     d, cloud = configured_driver(rt_mod)
     cloud.network_down = True
-    d.tap(5003)
+    d.tap(5004)
     assert d.events() == ["Command Failed"] and "Network error" in d.prop("Driver Status")
     assert d.persisted_auth()["refresh_token"] in cloud.refresh_tokens
 
@@ -778,9 +778,52 @@ def test_create_app_guards(rt_mod):
 def test_pat_only_mode(rt_mod):
     d, cloud = pat_driver(rt_mod, "da_ref_normal_000001")
     assert "Personal Access Token only" in d.prop("Authorization Status")
-    d.tap(5003)
+    d.tap(5004)
     d.advance(10000)
     assert cloud.attr("main", "samsungce.sabbathMode", "status") == "on"
+
+
+def test_status_tile(rt_mod):
+    d = Driver(rt_mod, FakeSmartThings())
+    d.init()
+    assert d.icon(5001) == "unknown"                       # not set up
+    d.tap(5001)
+    assert d.icon(5001) == "unknown" and d.events() == []
+    d, cloud = configured_driver(rt_mod)
+    assert d.icon(5001) == "ok"
+    cloud.set_attr("freezer", "contactSensor", "contact", "open")
+    d.advance(2 * 60 * 1000)
+    assert d.icon(5001) == "door"
+    cloud.set_attr("freezer", "contactSensor", "contact", "closed")
+    n_requests = len(cloud.log)
+    d.g.ReceivedFromProxy(5001, "SELECT", d.rt.table_from({}))   # tap = refresh
+    assert d.icon(5001) == "pending"
+    d.pump()
+    assert d.icon(5001) == "ok" and len(cloud.log) > n_requests
+    cloud.health = "OFFLINE"
+    d.tap(5001)
+    assert d.icon(5001) == "error"
+    assert d.icon(5004) == "error"                         # offline: every tile shows it
+    cloud.health = "ONLINE"
+    d.tap(5001)
+    assert d.icon(5001) == "ok" and d.icon(5004) == "off"
+    cloud.network_down = True
+    d.tap(5001)
+    assert d.icon(5001) == "error" and d.icon(5004) == "off"   # a failed refresh only marks the status tile
+    cloud.network_down = False
+    d.tap(5001)
+    assert d.icon(5001) == "ok"
+
+
+def test_status_tile_description(rt_mod):
+    d, cloud = configured_driver(rt_mod)
+    last = None
+    for i in range(len(d.M.proxy), 0, -1):
+        p = d.M.proxy[i]
+        if p.binding == 5001 and p.cmd == "ICON_CHANGED":
+            last = p.params.icon_description
+            break
+    assert last == f"Refrigerator: OK - Fridge 37 {DEG}F, Freezer 0 {DEG}F", last
 
 
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_")]

@@ -76,6 +76,11 @@ def check_xml(xml_text):
         rel = root.findtext(tag)
         if rel and not (SRC / "www" / rel).is_file():
             fail(f"missing <{tag}> image www/{rel}")
+    for proxy in root.find("proxies") if root.find("proxies") is not None else []:
+        for attr in ("small_image", "large_image"):
+            rel = proxy.get(attr)
+            if rel and not (SRC / "www" / rel).is_file():
+                fail(f"missing {attr} www/{rel} for proxy '{proxy.get('name')}'")
     doc = root.find("config/documentation")
     if doc is not None and not (SRC / doc.get("file")).is_file():
         fail(f"missing documentation file {doc.get('file')}")

@@ -42,6 +42,8 @@ local RENEW_RETRY_MS    = 5 * 60 * 1000     -- retry after a transient renew fai
 local CONFIRM_DELAYS_S  = { 3, 7, 15, 30 }  -- status re-reads after a command
 local ERROR_FLASH_MS    = 15000
 
+local STATUS_BINDING = 5001                 -- "Samsung Refrigerator" status tile (primary proxy)
+
 local PERSIST_AUTH  = "ST_AUTH"
 local PERSIST_LAST  = "ST_LAST"
 
@@ -49,7 +51,7 @@ local PERSIST_LAST  = "ST_LAST"
 -- the refrigerator is used.
 FEATURES = {
   {
-    key = "powerCool", name = "Power Cool", binding = 5001, button = 300,
+    key = "powerCool", name = "Power Cool", binding = 5002, button = 300,
     var = "POWER_COOL", cond = "POWER_COOL",
     variants = {
       { comp = "main", cap = "samsungce.powerCool", attr = "activated",
@@ -59,7 +61,7 @@ FEATURES = {
     },
   },
   {
-    key = "powerFreeze", name = "Power Freeze", binding = 5002, button = 301,
+    key = "powerFreeze", name = "Power Freeze", binding = 5003, button = 301,
     var = "POWER_FREEZE", cond = "POWER_FREEZE",
     variants = {
       { comp = "main", cap = "samsungce.powerFreeze", attr = "activated",
@@ -69,7 +71,7 @@ FEATURES = {
     },
   },
   {
-    key = "sabbath", name = "Sabbath Mode", binding = 5003, button = 302,
+    key = "sabbath", name = "Sabbath Mode", binding = 5004, button = 302,
     var = "SABBATH_MODE", cond = "SABBATH_MODE",
     variants = {
       { comp = "main", cap = "samsungce.sabbathMode", attr = "status",
@@ -77,7 +79,7 @@ FEATURES = {
     },
   },
   {
-    key = "iceMaker", name = "Ice Maker", binding = 5004, button = 303,
+    key = "iceMaker", name = "Ice Maker", binding = 5005, button = 303,
     var = "ICE_MAKER", cond = "ICE_MAKER",
     variants = {
       { comp = "icemaker", cap = "switch", attr = "switch", on = { cmd = "on" }, off = { cmd = "off" } },
@@ -121,6 +123,8 @@ gState = {
   doorAlerted = false,
   filterStatus = nil,
   statusRead = false,
+  refreshing = false,  -- status tile tapped, refresh in progress
+  refreshError = nil,  -- last status refresh error (status tile only)
 }
 gOps = {}            -- pending command confirmations, by key
 local gSeq = 0
@@ -502,8 +506,40 @@ function UpdateFeatureUI(f)
   setVar(f.var, f.state == true and "1" or "0")
 end
 
+-- The "Samsung Refrigerator" tile: overall state at a glance; tapping it refreshes.
+function UpdateStatusTile()
+  local icon, desc
+  local problem = globalProblem() or gState.refreshError
+  local temps = {}
+  if (Properties["Fridge Temperature"] or "") ~= "" and Properties["Fridge Temperature"] ~= "Not available" then
+    temps[#temps + 1] = "Fridge " .. Properties["Fridge Temperature"]
+  end
+  if (Properties["Freezer Temperature"] or "") ~= "" and Properties["Freezer Temperature"] ~= "Not available" then
+    temps[#temps + 1] = "Freezer " .. Properties["Freezer Temperature"]
+  end
+  temps = table.concat(temps, ", ")
+  if gState.refreshing then
+    icon, desc = "pending", "Refrigerator: refreshing..."
+  elseif problem then
+    icon, desc = "error", "Refrigerator: " .. problem
+  elseif not bearerToken() or deviceId() == "" then
+    icon, desc = "unknown", "Refrigerator: not set up"
+  elseif not gState.statusRead then
+    icon, desc = "unknown", "Refrigerator: waiting for status"
+  elseif gState.doorOpen then
+    icon, desc = "door", "Refrigerator: " .. tostring(Properties["Doors"])
+  else
+    icon, desc = "ok", "Refrigerator: OK" .. (temps ~= "" and (" - " .. temps) or "")
+  end
+  if icon ~= gState.statusIcon or desc ~= gState.statusDesc then
+    pcall(C4.SendToProxy, C4, STATUS_BINDING, "ICON_CHANGED", { icon = icon, icon_description = desc })
+    gState.statusIcon, gState.statusDesc = icon, desc
+  end
+end
+
 function UpdateUI()
   for _, f in ipairs(FEATURES) do UpdateFeatureUI(f) end
+  UpdateStatusTile()
 end
 
 local function setDriverStatus(text)
@@ -741,7 +777,7 @@ end
 ------------------------------------------------------------------------------
 -- SmartThings API
 ------------------------------------------------------------------------------
-local function bearerToken()
+function bearerToken()
   if gAuth and gAuth.access_token then return gAuth.access_token, "oauth" end
   local pat = trim(Properties["Personal Access Token"])
   if pat ~= "" then return pat, "pat" end
@@ -799,7 +835,7 @@ local function apiRequest(method, pathOrUrl, body, cb, isRetry)
   end)
 end
 
-local function deviceId()
+function deviceId()
   return trim(Properties["Device ID"])
 end
 
@@ -1146,6 +1182,7 @@ function RefreshStatus(cb, skipHealth)
         return
       end
       ApplyStatus(res)
+      gState.refreshError = nil
       if skipHealth then
         refreshSummary()
         UpdateUI()
@@ -1166,6 +1203,7 @@ function RefreshStatus(cb, skipHealth)
     else
       logError("Status refresh failed: " .. tostring(err))
       setDriverStatus("Status refresh failed: " .. tostring(err))
+      gState.refreshError = "status refresh failed"
       UpdateUI()
       if cb then cb(false, err) end
     end
@@ -1686,9 +1724,26 @@ function ExecuteCommand(strCommand, tParams)
   end
 end
 
+local function refreshFromTile()
+  if not bearerToken() or deviceId() == "" then
+    UpdateStatusTile()
+    return
+  end
+  gState.refreshing = true
+  UpdateStatusTile()
+  RefreshStatus(function()
+    gState.refreshing = false
+    UpdateUI()
+  end)
+end
+
 function ReceivedFromProxy(idBinding, strCommand, tParams)
   dbg("ReceivedFromProxy:", idBinding, strCommand)
   local ok, err = pcall(function()
+    if idBinding == STATUS_BINDING and strCommand == "SELECT" then
+      refreshFromTile()
+      return
+    end
     local f = FEATURE_BY_BINDING[idBinding]
     if not f then return end
     if (idBinding == f.binding and strCommand == "SELECT") or (idBinding == f.button and strCommand == "DO_CLICK") then

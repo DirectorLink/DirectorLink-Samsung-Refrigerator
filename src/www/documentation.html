@@ -25,6 +25,7 @@ The driver checks which features your model supports. Anything the model doesn't
 
 <table>
   <tr><th>Feature</th><th>In the Control4 app</th><th>Programming</th></tr>
+  <tr><td>Refrigerator status</td><td>Tile: green OK, amber door open, red problem; tap to refresh</td><td>-</td></tr>
   <tr><td>Power Cool (fast cooling)</td><td>Tile, tap to toggle</td><td>On / Off / Toggle, events, conditional</td></tr>
   <tr><td>Power Freeze (fast freezing)</td><td>Tile, tap to toggle</td><td>On / Off / Toggle, events, conditional</td></tr>
   <tr><td>Sabbath Mode</td><td>Tile, tap to toggle</td><td>On / Off / Toggle, events, conditional</td></tr>
@@ -90,14 +91,15 @@ From now on, the driver renews its access itself. The Personal Access Token isn'
 <b>Select Refrigerator</b>. Check <b>Supported Features</b> to see what your model offers.</p>
 
 <h3>Step 5 - Show the tiles in the Control4 app</h3>
-<p>The driver adds four UI buttons: <b>Power Cool</b>, <b>Power Freeze</b>, <b>Sabbath Mode</b> and <b>Ice Maker</b>.
+<p>The driver appears in the room as <b>Samsung Refrigerator</b>. It adds five UI buttons: the <b>Samsung Refrigerator</b> status tile and the feature tiles <b>Power Cool</b>, <b>Power Freeze</b>, <b>Sabbath Mode</b> and <b>Ice Maker</b>.
 In Composer, open the room's Navigator settings and make the ones you want visible on a menu (for example Comfort).
-Hide the ones your model doesn't support. Each tile can also be bound to a keypad button (connections
+Hide the ones your model doesn't support. Each feature tile can also be bound to a keypad button (connections
 <i>Keypad Button: ...</i>); the button LED follows the state.</p>
 
 <h3>Tile icons</h3>
+<p><b>Samsung Refrigerator</b> (status): green ring = OK; amber ring with the door drawn open = a door is open; white ring = refreshing (tap the tile to refresh); red ring = offline, authorization needed or the last refresh failed; gray = not set up yet.</p>
 <table>
-  <tr><th>Look</th><th>Meaning</th></tr>
+  <tr><th>Feature tiles</th><th>Meaning</th></tr>
   <tr><td>Colored ring (gold, cyan, blue, aqua)</td><td>Feature is ON</td></tr>
   <tr><td>Gray ring</td><td>Feature is OFF</td></tr>
   <tr><td>White ring with dots</td><td>Command sent, waiting for the refrigerator to confirm (usually about 4 seconds)</td></tr>

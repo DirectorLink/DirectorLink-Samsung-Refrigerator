@@ -16,10 +16,11 @@
 	<minimum_os_version>3.3.0</minimum_os_version>
 	<auto_update>false</auto_update>
 	<proxies>
-		<proxy proxybindingid="5001" name="Power Cool" primary="True" image_source="c4z" large_image="icons/device_lg.png" small_image="icons/device_sm.png">uibutton</proxy>
-		<proxy proxybindingid="5002" name="Power Freeze" image_source="c4z" large_image="icons/device_lg.png" small_image="icons/device_sm.png">uibutton</proxy>
-		<proxy proxybindingid="5003" name="Sabbath Mode" image_source="c4z" large_image="icons/device_lg.png" small_image="icons/device_sm.png">uibutton</proxy>
-		<proxy proxybindingid="5004" name="Ice Maker" image_source="c4z" large_image="icons/device_lg.png" small_image="icons/device_sm.png">uibutton</proxy>
+		<proxy proxybindingid="5001" name="Samsung Refrigerator" primary="True" image_source="c4z" large_image="icons/refrigerator/device_lg.png" small_image="icons/refrigerator/device_sm.png">uibutton</proxy>
+		<proxy proxybindingid="5002" name="Power Cool" image_source="c4z" large_image="icons/power_cool/device_lg.png" small_image="icons/power_cool/device_sm.png">uibutton</proxy>
+		<proxy proxybindingid="5003" name="Power Freeze" image_source="c4z" large_image="icons/power_freeze/device_lg.png" small_image="icons/power_freeze/device_sm.png">uibutton</proxy>
+		<proxy proxybindingid="5004" name="Sabbath Mode" image_source="c4z" large_image="icons/sabbath/device_lg.png" small_image="icons/sabbath/device_sm.png">uibutton</proxy>
+		<proxy proxybindingid="5005" name="Ice Maker" image_source="c4z" large_image="icons/ice_maker/device_lg.png" small_image="icons/ice_maker/device_sm.png">uibutton</proxy>
 	</proxies>
 	<config>
 		<documentation file="www/documentation.html"/>
@@ -431,6 +432,50 @@
 	<capabilities>
 		<navigator_display_option proxybindingid="5001">
 			<display_icons>
+				<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/unknown_70.png</Icon>
+				<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/unknown_90.png</Icon>
+				<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/unknown_300.png</Icon>
+				<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/unknown_512.png</Icon>
+				<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/unknown_1024.png</Icon>
+				<state id="ok">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/ok_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/ok_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/ok_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/ok_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/ok_1024.png</Icon>
+				</state>
+				<state id="door">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/door_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/door_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/door_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/door_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/door_1024.png</Icon>
+				</state>
+				<state id="pending">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/pending_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/pending_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/pending_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/pending_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/pending_1024.png</Icon>
+				</state>
+				<state id="error">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/error_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/error_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/error_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/error_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/error_1024.png</Icon>
+				</state>
+				<state id="unknown">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/unknown_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/unknown_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/unknown_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/unknown_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/refrigerator/unknown_1024.png</Icon>
+				</state>
+			</display_icons>
+		</navigator_display_option>
+		<navigator_display_option proxybindingid="5002">
+			<display_icons>
 				<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_70.png</Icon>
 				<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_90.png</Icon>
 				<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_300.png</Icon>
@@ -473,7 +518,7 @@
 				</state>
 			</display_icons>
 		</navigator_display_option>
-		<navigator_display_option proxybindingid="5002">
+		<navigator_display_option proxybindingid="5003">
 			<display_icons>
 				<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_70.png</Icon>
 				<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_90.png</Icon>
@@ -517,7 +562,7 @@
 				</state>
 			</display_icons>
 		</navigator_display_option>
-		<navigator_display_option proxybindingid="5003">
+		<navigator_display_option proxybindingid="5004">
 			<display_icons>
 				<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_70.png</Icon>
 				<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_90.png</Icon>
@@ -561,7 +606,7 @@
 				</state>
 			</display_icons>
 		</navigator_display_option>
-		<navigator_display_option proxybindingid="5004">
+		<navigator_display_option proxybindingid="5005">
 			<display_icons>
 				<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_70.png</Icon>
 				<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_90.png</Icon>
@@ -610,7 +655,7 @@
 		<connection>
 			<id>5001</id>
 			<facing>6</facing>
-			<connectionname>UIBUTTON Power Cool</connectionname>
+			<connectionname>UIBUTTON Samsung Refrigerator</connectionname>
 			<type>2</type>
 			<consumer>False</consumer>
 			<audiosource>False</audiosource>
@@ -625,7 +670,7 @@
 		<connection>
 			<id>5002</id>
 			<facing>6</facing>
-			<connectionname>UIBUTTON Power Freeze</connectionname>
+			<connectionname>UIBUTTON Power Cool</connectionname>
 			<type>2</type>
 			<consumer>False</consumer>
 			<audiosource>False</audiosource>
@@ -640,7 +685,7 @@
 		<connection>
 			<id>5003</id>
 			<facing>6</facing>
-			<connectionname>UIBUTTON Sabbath Mode</connectionname>
+			<connectionname>UIBUTTON Power Freeze</connectionname>
 			<type>2</type>
 			<consumer>False</consumer>
 			<audiosource>False</audiosource>
@@ -654,6 +699,21 @@
 		</connection>
 		<connection>
 			<id>5004</id>
+			<facing>6</facing>
+			<connectionname>UIBUTTON Sabbath Mode</connectionname>
+			<type>2</type>
+			<consumer>False</consumer>
+			<audiosource>False</audiosource>
+			<videosource>False</videosource>
+			<linelevel>False</linelevel>
+			<classes>
+				<class>
+					<classname>UIBUTTON</classname>
+				</class>
+			</classes>
+		</connection>
+		<connection>
+			<id>5005</id>
 			<facing>6</facing>
 			<connectionname>UIBUTTON Ice Maker</connectionname>
 			<type>2</type>
