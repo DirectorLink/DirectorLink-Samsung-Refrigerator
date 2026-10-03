@@ -8,6 +8,8 @@ Free. No subscription, no license key, no account with us.
 
 Made by [DirectorLink](https://directorlink.io), the open-source management layer for Control4 homes. Works on its own: DirectorLink is not required.
 
+With DirectorLink 1.7.0 or later, it also shows in the DirectorLink app.
+
 | Feature | Control4 app | Programming |
 |---|---|---|
 | **Samsung Refrigerator** status | tile: green OK, amber door open, red problem; tap to refresh | – |
