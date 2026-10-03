@@ -80,8 +80,9 @@ If you add the driver again later, paste the same Client ID and Secret instead o
   <li>Open it in a browser and sign in with the same Samsung account. Choose the location with the refrigerator, then click <b>Authorize</b>.</li>
   <li>The browser goes to a page whose address starts with <code>https://httpbin.org/get?code=</code>.
       Copy the <b>whole address</b> from the address bar.</li>
-  <li><b>Within about a minute</b>, paste it into the <b>Authorization Code</b> property and click Set.
-      Codes expire quickly; if it fails, open the link again.</li>
+  <li><b>Within a few minutes</b>, paste it into the <b>Authorization Code</b> property and click Set.
+      Codes expire; if it fails, open the link again. Pasted it into <b>OAuth Redirect URI</b> or
+      <b>Personal Access Token</b> by mistake? The driver notices, puts that field back, and signs in anyway.</li>
 </ol>
 <p class="ok"><b>Authorization Status</b> now reads <i>Authorized (OAuth) ... renews automatically</i>.
 From now on, the driver renews its access itself. The Personal Access Token isn't needed anymore.</p>

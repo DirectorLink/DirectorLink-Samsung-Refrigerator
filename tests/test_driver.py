@@ -826,6 +826,28 @@ def test_status_tile_description(rt_mod):
     assert last == f"Refrigerator: OK - Fridge 37 {DEG}F, Freezer 0 {DEG}F", last
 
 
+def test_auth_result_pasted_into_wrong_field(rt_mod):
+    # Seen on a real install: the redirected address went into OAuth Redirect URI.
+    for field in ("OAuth Redirect URI", "Personal Access Token"):
+        cloud = FakeSmartThings()
+        d = Driver(rt_mod, cloud)
+        d.init()
+        d.set_property("Personal Access Token", PAT)
+        d.action("CreateOAuthApp")
+        redirected = cloud.authorize(d.prop("Authorization URL"))
+        d.set_property(field, redirected)
+        assert d.prop("Authorization Status").startswith("Authorized"), (field, d.prop("Authorization Status"))
+        assert cloud.token_requests[-1]["redirect_uri"] == "https://httpbin.org/get", field
+        assert d.prop("OAuth Redirect URI") == "https://httpbin.org/get", field
+        assert d.prop("Authorization URL").startswith("https://api.smartthings.com/oauth/authorize?"), field
+        if field == "Personal Access Token":
+            assert d.prop("Personal Access Token") == ""
+        assert d.prop("Device ID") == cloud.device_id and d.prop("Driver Status") == "OK", field
+    # A normal redirect URI change still just rebuilds the authorization link
+    d.set_property("OAuth Redirect URI", "https://oauth.pstmn.io/v1/callback")
+    assert "redirect_uri=https%3A%2F%2Foauth.pstmn.io%2Fv1%2Fcallback" in d.prop("Authorization URL")
+
+
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
 
 

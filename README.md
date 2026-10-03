@@ -90,7 +90,9 @@ On the driver's **Actions** tab click **1. Create OAuth App (uses Personal Acces
 1. Click **2. Show Authorization URL**. The link appears on the **Lua** tab and in the **Authorization URL** property.
 2. Open it in a browser, sign in with the same Samsung account, choose the location, and click **Authorize**.
 3. The browser lands on `https://httpbin.org/get?code=...`. Copy the **whole address** from the address bar.
-4. **Within about a minute**, paste it into the **Authorization Code** property → **Set**.
+4. **Within a few minutes**, paste it into the **Authorization Code** property → **Set**.
+   Pasted it into **OAuth Redirect URI** or **Personal Access Token** by mistake? The driver notices,
+   puts that field back, and signs in anyway.
 
 **Authorization Status** should now say *Authorized (OAuth) … renews automatically*. You're done: the
 driver renews its own access from now on, and the Personal Access Token is no longer used.

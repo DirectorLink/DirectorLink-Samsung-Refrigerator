@@ -1547,17 +1547,19 @@ function ShowAuthUrl()
   print("1) Open this URL in a browser and sign in with the Samsung account that owns the refrigerator:")
   print(url)
   print("2) Choose the location, approve, and copy the address of the page you land on (it contains code=...).")
-  print("3) Paste it into the 'Authorization Code' property right away (codes expire within minutes).")
+  print("3) Paste it into the 'Authorization Code' property within a few minutes (codes expire).")
   print("===================================")
 end
 
-local function exchangeAuthCode(raw)
+-- redirectOverride: the redirect URI to send when the property was just repaired
+local function exchangeAuthCode(raw, redirectOverride)
   local code = extractAuthCode(raw)
   if not code or code == "" then
     setProp("Authorization Status", "Could not find a code in the pasted text")
     return
   end
   local clientId, _, redirect = oauthClient()
+  redirect = redirectOverride or redirect
   if redirect == "" then
     setProp("Authorization Status", "Set OAuth Redirect URI first")
     return
@@ -1622,13 +1624,39 @@ ON_PROPERTY_CHANGED["Debug Mode"] = function(value)
   gDebug = (value == "On")
 end
 
-ON_PROPERTY_CHANGED["Personal Access Token"] = function()
+-- The page the browser lands on after authorizing, e.g. https://httpbin.org/get?code=Ab12Cd
+local function isAuthResult(value)
+  return trim(value):find("^https?://[^%s]*[?&]code=[^&#%s]+") ~= nil
+end
+
+ON_PROPERTY_CHANGED["Personal Access Token"] = function(value)
+  if isAuthResult(value) then
+    -- Authorization result pasted into the wrong field: use it, and clear the field
+    log("Authorization result was pasted into Personal Access Token - using it as the authorization code")
+    C4:UpdateProperty("Personal Access Token", "")
+    exchangeAuthCode(value)
+    return
+  end
   updateAuthStatus()
 end
 
 ON_PROPERTY_CHANGED["OAuth Client ID"] = function() updateAuthUrl() end
 ON_PROPERTY_CHANGED["OAuth Client Secret"] = function() updateAuthUrl() end
-ON_PROPERTY_CHANGED["OAuth Redirect URI"] = function() updateAuthUrl() end
+
+ON_PROPERTY_CHANGED["OAuth Redirect URI"] = function(value)
+  if isAuthResult(value) then
+    -- Authorization result pasted into the wrong field: SmartThings appended ?code=...
+    -- to the registered redirect URI, so restore that and use the code.
+    local base = trim(value):match("^([^?#]+)")
+    log("Authorization result was pasted into OAuth Redirect URI - restoring it to " .. base ..
+      " and using the code")
+    C4:UpdateProperty("OAuth Redirect URI", base)
+    updateAuthUrl()
+    exchangeAuthCode(value, base)
+    return
+  end
+  updateAuthUrl()
+end
 
 ON_PROPERTY_CHANGED["Authorization Code"] = function(value)
   if trim(value) == "" then return end
