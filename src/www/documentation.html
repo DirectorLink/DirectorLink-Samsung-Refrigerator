@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Samsung Refrigerator (DirectorLink)</title>
+<title>DirectorLink · Samsung Refrigerator</title>
 <style>
   body { font-family: Segoe UI, Arial, sans-serif; font-size: 13px; line-height: 1.45; color: #222; margin: 16px; max-width: 860px; }
   h1 { font-size: 20px; margin-bottom: 4px; }
@@ -18,8 +18,9 @@
 </style>
 </head>
 <body>
-<h1>Samsung Refrigerator (DirectorLink)</h1>
-<p class="brand">A free, open-source driver by <b>DirectorLink</b>: <code>directorlink.io</code>. Updates, help and bug reports: <code>github.com/IsraelCIL/DirectorLink-Samsung-Refrigerator</code></p>
+<h1>DirectorLink · Samsung Refrigerator</h1>
+<p class="brand">Free, open-source Control4 driver for Samsung Wi-Fi refrigerators. Part of DirectorLink Drivers.<br>
+Downloads, updates and help: <code>directorlink.io/drivers/samsung-refrigerator</code></p>
 <p>Control and monitor Samsung Wi-Fi refrigerators from Control4 through the Samsung SmartThings cloud.
 The driver checks which features your model supports. Anything the model doesn't support shows as <i>Not available</i>.</p>
 
@@ -159,12 +160,15 @@ Changes made on the refrigerator itself also show up in Control4.</p>
 </ul>
 
 <h2>Privacy and security</h2>
-<p>The driver talks only to <code>api.smartthings.com</code>. Tokens are kept in Control4's encrypted storage.
+<p>The driver talks only to the Samsung cloud. It sends nothing to DirectorLink and collects no usage data.</p>
+<p>Tokens are kept in Control4's encrypted storage and are never written to the log.
 The Client Secret is a masked property, but anyone with Composer access to the project can read it.
 To revoke access, remove <i>DirectorLink Samsung Refrigerator</i> from the connected services in the SmartThings app,
 or click <b>Sign Out (clear tokens)</b>.</p>
 <h2>Updates</h2>
-<p>Download new versions from the GitHub page above (Releases) and install them with <b>Driver &rarr; Add or Update Driver</b>. The file must be named exactly <code>DirectorLink-Samsung-Refrigerator.c4z</code>. A copy named <code>DirectorLink-Samsung-Refrigerator (1).c4z</code> would be added as a separate driver instead of updating this one, so delete older downloads first.</p>
-<p>Licensed under the Apache License 2.0. Not affiliated with or endorsed by Samsung, SmartThings, Control4 or Snap One.</p>
+<p>Download new versions from <code>directorlink.io/drivers/samsung-refrigerator</code> and install them with <b>Driver &rarr; Add or Update Driver or Agent</b>. The file must be named exactly <code>DirectorLink-Samsung-Refrigerator.c4z</code>. A copy named <code>DirectorLink-Samsung-Refrigerator (1).c4z</code> would be added as a separate driver instead of updating this one, so delete older downloads first.</p>
+<h2>Support</h2>
+<p>Community-supported, best effort. Report problems from the page above.</p>
+<p>Apache License 2.0. Copyright 2026 DirectorLink. Not affiliated with or endorsed by Samsung, Control4 or Snap One. Samsung, Control4 and related names are trademarks of their respective owners.</p>
 </body>
 </html>

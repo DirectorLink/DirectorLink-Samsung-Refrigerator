@@ -1,10 +1,12 @@
-# Samsung Refrigerator for Control4, by DirectorLink
+# DirectorLink · Samsung Refrigerator for Control4
 
-**A free, open-source Control4 driver for Samsung Wi-Fi refrigerators**, from the makers of
-[DirectorLink](https://github.com/IsraelCIL/DirectorLink), the open-source management layer for Control4 homes.
+Free, open-source Control4 driver for Samsung Wi-Fi refrigerators. Part of [DirectorLink Drivers](https://directorlink.io/drivers).
 
-It controls and monitors the refrigerator through the Samsung SmartThings cloud. It needs no extra
-hardware and no subscription.
+It works through the Samsung SmartThings cloud: no extra hardware and no subscription.
+
+Free. No subscription, no license key, no account with us.
+
+Made by [DirectorLink](https://directorlink.io), the open-source management layer for Control4 homes. Works on its own: DirectorLink is not required.
 
 | Feature | Control4 app | Programming |
 |---|---|---|
@@ -18,41 +20,36 @@ hardware and no subscription.
 | **Water filter** | – | Needs Replacement event, Reset command |
 | **Power**, energy, online status | – | Offline / Online events, variables |
 
-The driver detects each feature per refrigerator. Anything your model doesn't support shows as
+The driver checks which features each refrigerator supports. Anything your model doesn't have shows as
 *Not available*, and its tile is greyed out.
 
-Tested live on an RF85T901335ML (SmartThings model `TP2X_REF_20K`). The offline test suite covers
-the TP2X, TP1X, Family Hub, one-door and older dongle-based models.
+## Requirements
 
----
+- **Control4:** OS 3.3 or newer, with internet access on the controller.
+- **Refrigerator:** a Samsung refrigerator on Wi-Fi, added to the SmartThings app.
+- **For setup:** the login of the Samsung account the refrigerator is registered to, and about 10 minutes.
+- **Tested on:**
+  - Live: an RF85T901335ML (SmartThings model `TP2X_REF_20K`) on a CORE-1 with OS 4.2.1.
+  - Offline: TP2X, TP1X, Family Hub, one-door and older dongle-based models.
 
 ## Installation
 
-You add it like any Control4 driver, with **Composer Pro**.
-
-1. Download **`DirectorLink-Samsung-Refrigerator.c4z`** from the
-   [latest release](https://github.com/IsraelCIL/DirectorLink-Samsung-Refrigerator/releases/latest).
-   Each release also lists `SHA256SUMS.txt`.
+1. Download **`DirectorLink-Samsung-Refrigerator.c4z`** from the [latest release](../../releases/latest),
+   or from https://directorlink.io/drivers/samsung-refrigerator. Each release also lists `SHA256SUMS.txt`.
 2. In Composer Pro: **Driver → Add or Update Driver or Agent**, then select the file.
-3. On the Search tab, tick **Local**, search for **Samsung Refrigerator (DirectorLink)**, and add it to the kitchen.
-4. Follow the setup below. The same steps appear on the driver's **Documentation** tab in Composer.
+3. On the Search tab, tick **Local**, search for **DirectorLink**, and add **DirectorLink · Samsung Refrigerator** to the room.
 
-Requirements:
-- The refrigerator is on Wi-Fi and added to the SmartThings app.
-- The controller has internet access.
-- Control4 OS 3.3 or newer (tested on OS 4.2.1).
-
-> **Keep the file name exactly `DirectorLink-Samsung-Refrigerator.c4z`.** Composer identifies the driver by its file name.
+> **Keep the file name exactly `DirectorLink-Samsung-Refrigerator.c4z`.** Composer identifies a driver by its file name.
 > A browser saves a second download as `DirectorLink-Samsung-Refrigerator (1).c4z`, which Composer installs as a
-> *separate* driver instead of updating, and the tile icons break. Delete older downloads first.
-
----
+> *separate* driver instead of updating this one. Delete older downloads first.
 
 ## Setup
 
+The same steps appear on the driver's **Documentation** tab in Composer.
+
 ### Step 1: Get the right SmartThings token
 
-The driver needs a **Personal Access Token (PAT)** **once**, to create its own secure login (OAuth).
+The driver needs a **Personal Access Token** **once**, to create its own secure login (OAuth).
 
 1. On a computer, open **https://account.smartthings.com/tokens**.
 2. Sign in with the **same Samsung account the refrigerator is registered to** in the SmartThings app.
@@ -66,15 +63,6 @@ The driver needs a **Personal Access Token (PAT)** **once**, to create its own s
 5. Click **Generate token** and copy it. It looks like `1a2b3c4d-1111-2222-3333-444455556666`
    and is shown **only once**.
 6. In Composer, select the driver and paste the token into **Personal Access Token** → **Set**.
-
-**Getting the token wrong is the most common setup problem:**
-
-| Mistake | What the driver shows |
-|---|---|
-| No scopes ticked at all | `Create app failed: Forbidden ...` |
-| Only **Devices** ticked (Apps missing) | `Create app failed: Forbidden ... the token needs ALL Apps scopes` |
-| Token older than 24 hours | `Create app failed: Not authorized ...`. Generate a new token |
-| Signed in with a different Samsung account | `No refrigerators found in this SmartThings account` |
 
 ### Step 2: Create the OAuth app (this is where the Client ID comes from)
 
@@ -106,8 +94,6 @@ driver renews its own access from now on, and the Personal Access Token is no lo
   **Power Freeze**, **Sabbath Mode**, **Ice Maker**). Hide the ones your model doesn't support.
 - Optional: bind keypad buttons to the *Keypad Button: …* connections. Their LEDs follow the state.
 
----
-
 ## Programming examples
 
 - **Shabbat:** In the Scheduler, Friday at sunset − 30 min runs *Set Feature → Sabbath Mode → On*;
@@ -119,40 +105,47 @@ Commands go through Samsung's cloud. The driver re-reads the refrigerator after 
 it as done only when the refrigerator confirms, typically in about 4 seconds. If it doesn't confirm, the
 driver fires **Command Failed**.
 
----
-
 ## Updating
 
-Download the new release's `DirectorLink-Samsung-Refrigerator.c4z`. Mind the file name, as described in
-Installation. Then run **Driver → Add or Update Driver** in Composer Pro. Your settings and sign-in are kept.
-To go back to an older version, install the `.c4z` from an older release the same way.
+Download the new `DirectorLink-Samsung-Refrigerator.c4z` from the [latest release](../../releases/latest).
+Mind the file name, as described in Installation. Then run **Driver → Add or Update Driver or Agent** in
+Composer Pro. Your settings and sign-in are kept. To go back to an older version, install the `.c4z` from an
+older release the same way.
 
----
+## Troubleshooting
 
-## FAQ
+| What you see | What to do |
+|---|---|
+| `Create app failed: Forbidden ...` | The token is missing scopes. Make a new one with **all Devices, Locations and Apps** boxes ticked. |
+| `Create app failed: Not authorized ...` | The token is older than 24 hours. Make a new one. |
+| `OAuth Client ID is already set` | The app already exists. Use it, or clear both OAuth fields to create a new one. |
+| `No refrigerators found in this SmartThings account` | You signed in with a different Samsung account than the one the refrigerator is registered to. |
+| `Authorization failed: ...` | The code expired or was already used. Click **2. Show Authorization URL** and sign in again. |
+| `Re-authorization required` | SmartThings no longer accepts the saved login, for example after about 30 days with the controller offline, or after access was removed in the SmartThings app. Repeat Step 3 only. |
+| A feature shows *Not available* | Your model or its firmware doesn't offer it in SmartThings. Check for a refrigerator update in the SmartThings app. |
+| `... was not confirmed by the refrigerator` | SmartThings accepted the command but the refrigerator didn't change. Check that it's online in the SmartThings app. |
+| `Rate limited by SmartThings` | SmartThings allows about 12 reads a minute per device. Don't set the poll interval very short, and don't send many commands at once. |
+| Lost the Client ID or Secret | Clear both OAuth fields, make a new token, and repeat Steps 2 and 3. |
 
-**Where do I find the Client ID?** You don't need to look it up: the driver creates it in Step 2.
-If you lost it, clear the two OAuth fields and run Step 2 again with a new token, then Step 3.
+The Personal Access Token is needed only once. After Step 3 the driver renews its own access.
+There's no local (no-cloud) option: current Samsung refrigerators need device certificates for local control.
+So the driver uses the official SmartThings cloud API, the same one Home Assistant uses.
 
-**Do I need to repeat this every 24 hours?** No. Only the Personal Access Token expires after 24 hours,
-and it's needed only once. After Step 3, the driver renews its OAuth access automatically.
+## Privacy
 
-**When do I need to authorize again?** If the controller is offline for about 30 days, or if access is
-removed in the SmartThings app. Repeat Step 3 only.
+The driver talks only to the Samsung cloud. It sends nothing to DirectorLink and collects no usage data.
 
-**A feature shows "Not available".** Your model or firmware doesn't expose it to SmartThings.
-For example, some Family Hub units have Sabbath mode disabled in SmartThings.
+The sign-in in Step 3 happens in your browser, which lands on httpbin.org to show you the one-time code.
+SmartThings tokens are kept in Control4's encrypted driver storage and are never written to the log.
 
-**Is there a local (no-cloud) option?** Not for current Samsung refrigerators. Their local protocol needs
-device certificates, so this driver uses the official SmartThings cloud API, the same one Home Assistant uses.
+## Support
 
-**Something doesn't work.** [Open an issue](https://github.com/IsraelCIL/DirectorLink-Samsung-Refrigerator/issues/new/choose).
-Include the Composer properties *Driver Version*, *Model*, *Supported Features* and *Driver Status*, plus the Lua
-output with Debug Mode on. Never post tokens or the Client Secret. For security problems, see [SECURITY.md](SECURITY.md).
+Community-supported, best effort. Report problems in [Issues](../../issues).
 
----
+Include the Composer properties *Driver Version*, *Model*, *Supported Features* and *Driver Status*, plus the
+Lua output with Debug Mode on. Never post tokens or the Client Secret. For security problems, see [SECURITY.md](SECURITY.md).
 
-## For developers
+## Building from source
 
 ```
 src/driver.xml               driver definition (5 uibutton proxies, properties, actions, commands, events)
@@ -169,7 +162,7 @@ tests/fixtures/              Home Assistant SmartThings fixtures (Apache-2.0, se
 
 ```
 pip install -r requirements-dev.txt
-python tests/test_driver.py          # 25 scenarios x (Lua 5.1, LuaJIT 2.1)
+python tests/test_driver.py          # offline tests under Lua 5.1 and LuaJIT 2.1
 python scripts/check_repo.py
 python scripts/build.py              # -> dist/DirectorLink-Samsung-Refrigerator.c4z
 
@@ -177,14 +170,15 @@ set ST_TOKEN=<personal access token> # live tests operate your refrigerator, the
 python tests/live_test.py features
 ```
 
-**Releasing:** `VERSION` (`MAJOR.MINOR.PATCH`) is the only version to edit. The build stamps it into the
+**Releasing:** `VERSION` (`MAJOR.MINOR.PATCH`) is the only place the version is set. The build stamps it into the
 package: `driver.xml` `<version>` = MAJOR×10000 + MINOR×100 + PATCH, and `DRIVER_VERSION` in `driver.lua`.
 Add `docs/releases/v<VERSION>.md` and push to `main`. The release workflow runs the tests, builds, and
-publishes the GitHub Release with the `.c4z` and `SHA256SUMS.txt`. Without the notes file nothing is
-published, and an existing release is never replaced.
+publishes the release with the `.c4z` and `SHA256SUMS.txt`. Without the notes file nothing is published,
+and an existing release is never replaced.
 
 Don't zip with PowerShell 5.1's `Compress-Archive`: it writes backslash paths that break the icons.
-Never change proxies or connections in `driver.xml` once a version is released; installed projects depend on them.
+Never change the `.c4z` file name, proxy binding ids, variable order, event and command ids, or property names
+once released, because installed projects and dealers' programming depend on them.
 
 ### SmartThings API used (same as Home Assistant's `smartthings` integration)
 
@@ -199,10 +193,11 @@ Never change proxies or connections in `driver.xml` once a version is released; 
 
 A feature counts as unsupported when its capability is missing, listed in that component's
 `custom.disabledCapabilities`, or its component is listed in `main.custom.disabledComponents`.
-Auth: OAuth2 API_ONLY app with scopes `r:devices:* x:devices:*`. Access tokens last 24 hours;
-refresh tokens rotate on every use, so each new one is persisted immediately and refreshes are serialized.
+Auth: an OAuth2 API_ONLY app with scopes `r:devices:* x:devices:*`. Access tokens last 24 hours.
+Refresh tokens rotate on every use, so each new one is saved immediately and refreshes run one at a time.
 
----
+## License and trademarks
 
-Licensed under the [Apache License 2.0](LICENSE). Copyright 2026 DirectorLink.
-Not affiliated with or endorsed by Samsung, SmartThings, Control4 or Snap One (see [NOTICE](NOTICE)).
+See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+Apache License 2.0. Copyright 2026 DirectorLink. Not affiliated with or endorsed by Samsung, Control4 or Snap One. Samsung, Control4 and related names are trademarks of their respective owners.

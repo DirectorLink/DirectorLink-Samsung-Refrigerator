@@ -1,6 +1,6 @@
 --[[
-  Samsung Refrigerator (DirectorLink) - Control4 DriverWorks driver
-  DirectorLink - https://directorlink.io - Apache License 2.0
+  DirectorLink · Samsung Refrigerator - Control4 DriverWorks driver
+  Part of DirectorLink Drivers - https://directorlink.io/drivers/samsung-refrigerator - Apache License 2.0
 
   Controls Samsung Wi-Fi refrigerators through the SmartThings cloud REST API,
   using the same capabilities and commands as Home Assistant's smartthings
@@ -33,7 +33,7 @@ local AUTHORIZE_URL   = "https://api.smartthings.com/oauth/authorize"
 local TOKEN_URL       = "https://auth-global.api.smartthings.com/oauth/token"
 local OAUTH_SCOPES    = { "r:devices:*", "x:devices:*" }
 DRIVER_VERSION        = "dev"   -- scripts/build.py stamps the VERSION file here
-local USER_AGENT      = "DirectorLink-SamsungRefrigerator/" .. DRIVER_VERSION
+local USER_AGENT      = "DirectorLink-Samsung-Refrigerator/" .. DRIVER_VERSION
 local DISCOVER_PROMPT = "(run Discover Refrigerators)"
 
 local RENEW_MARGIN_S    = 4 * 3600          -- renew when less than this is left

@@ -423,8 +423,8 @@
               {
                 "href": "/wirelessinfo/vs/0",
                 "rep": {
-                  "macaddressWiFi": "34:FC:99:0A:67:55",
-                  "macaddressBLE": "34:FC:99:0A:67:56"
+                  "macaddressWiFi": "02:00:00:00:00:01",
+                  "macaddressBLE": "02:00:00:00:00:02"
                 }
               },
               {

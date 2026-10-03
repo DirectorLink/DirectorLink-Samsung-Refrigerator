@@ -91,6 +91,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
         shell: bash
         run: |
           gh release create "$TAG" \
@@ -98,5 +99,5 @@ jobs:
             "SHA256SUMS.txt" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "Samsung Refrigerator (DirectorLink) $TAG" \
+            --title "DirectorLink · Samsung Refrigerator $VERSION" \
             --notes-file "docs/releases/$TAG.md"

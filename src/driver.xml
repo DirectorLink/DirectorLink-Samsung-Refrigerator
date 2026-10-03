@@ -2,8 +2,8 @@
 	<copyright>Copyright 2026 DirectorLink</copyright>
 	<creator>DirectorLink</creator>
 	<manufacturer>Samsung</manufacturer>
-	<name>Samsung Refrigerator (DirectorLink)</name>
-	<model>SmartThings Refrigerator</model>
+	<name>DirectorLink · Samsung Refrigerator</name>
+	<model>Refrigerator (SmartThings)</model>
 	<created>10/03/2026 12:00</created>
 	<modified>10/03/2026 12:00</modified>
 	<!-- scripts/build.py stamps this from the VERSION file (major*10000 + minor*100 + patch). -->
