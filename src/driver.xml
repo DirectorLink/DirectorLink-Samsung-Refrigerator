@@ -1,0 +1,758 @@
+<devicedata>
+	<copyright>Copyright 2026 DirectorLink</copyright>
+	<creator>DirectorLink</creator>
+	<manufacturer>Samsung</manufacturer>
+	<name>Samsung Refrigerator (DirectorLink)</name>
+	<model>SmartThings Refrigerator</model>
+	<created>10/03/2026 12:00</created>
+	<modified>10/03/2026 12:00</modified>
+	<!-- scripts/build.py stamps this from the VERSION file (major*10000 + minor*100 + patch). -->
+	<version>10000</version>
+	<small image_source="c4z">icons/device_sm.png</small>
+	<large image_source="c4z">icons/device_lg.png</large>
+	<control>lua_gen</control>
+	<controlmethod>other</controlmethod>
+	<driver>DriverWorks</driver>
+	<minimum_os_version>3.3.0</minimum_os_version>
+	<auto_update>false</auto_update>
+	<proxies>
+		<proxy proxybindingid="5001" name="Power Cool" primary="True" image_source="c4z" large_image="icons/device_lg.png" small_image="icons/device_sm.png">uibutton</proxy>
+		<proxy proxybindingid="5002" name="Power Freeze" image_source="c4z" large_image="icons/device_lg.png" small_image="icons/device_sm.png">uibutton</proxy>
+		<proxy proxybindingid="5003" name="Sabbath Mode" image_source="c4z" large_image="icons/device_lg.png" small_image="icons/device_sm.png">uibutton</proxy>
+		<proxy proxybindingid="5004" name="Ice Maker" image_source="c4z" large_image="icons/device_lg.png" small_image="icons/device_sm.png">uibutton</proxy>
+	</proxies>
+	<config>
+		<documentation file="www/documentation.html"/>
+		<script file="driver.lua" jit="1"/>
+		<actions>
+			<action>
+				<name>1. Create OAuth App (uses Personal Access Token)</name>
+				<command>CreateOAuthApp</command>
+			</action>
+			<action>
+				<name>2. Show Authorization URL</name>
+				<command>ShowAuthUrl</command>
+			</action>
+			<action>
+				<name>3. Discover Refrigerators</name>
+				<command>DiscoverDevices</command>
+			</action>
+			<action>
+				<name>Refresh Status</name>
+				<command>RefreshStatus</command>
+			</action>
+			<action>
+				<name>Reset Water Filter</name>
+				<command>ResetWaterFilter</command>
+			</action>
+			<action>
+				<name>Renew Access Token Now</name>
+				<command>RenewToken</command>
+			</action>
+			<action>
+				<name>Sign Out (clear tokens)</name>
+				<command>SignOut</command>
+			</action>
+		</actions>
+		<properties>
+			<property>
+				<name>Driver Version</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Driver Status</name>
+				<type>STRING</type>
+				<default>Not configured</default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Debug Mode</name>
+				<type>LIST</type>
+				<items>
+					<item>Off</item>
+					<item>On</item>
+				</items>
+				<default>Off</default>
+				<readonly>false</readonly>
+			</property>
+
+			<property>
+				<name>SmartThings Account</name>
+				<type>LABEL</type>
+				<default>SmartThings Account</default>
+			</property>
+			<property>
+				<name>Personal Access Token</name>
+				<type>STRING</type>
+				<default></default>
+				<password>true</password>
+				<readonly>false</readonly>
+				<tooltip>From https://account.smartthings.com/tokens with ALL Devices, Locations and Apps scopes ticked. Needed once to create the OAuth app. New tokens expire after 24 hours.</tooltip>
+			</property>
+			<property>
+				<name>OAuth Client ID</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>false</readonly>
+				<tooltip>Filled automatically by '1. Create OAuth App'.</tooltip>
+			</property>
+			<property>
+				<name>OAuth Client Secret</name>
+				<type>STRING</type>
+				<default></default>
+				<password>true</password>
+				<readonly>false</readonly>
+				<tooltip>Filled automatically by '1. Create OAuth App'.</tooltip>
+			</property>
+			<property>
+				<name>OAuth Redirect URI</name>
+				<type>STRING</type>
+				<default>https://httpbin.org/get</default>
+				<readonly>false</readonly>
+				<tooltip>Must exactly match the redirect URI registered on the OAuth app.</tooltip>
+			</property>
+			<property>
+				<name>Authorization URL</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+				<tooltip>Open this in a browser, sign in to Samsung, approve, then paste the code (or the whole redirected URL) into Authorization Code.</tooltip>
+			</property>
+			<property>
+				<name>Authorization Code</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>false</readonly>
+				<tooltip>Paste the code= value (or the full URL you were redirected to). It is exchanged immediately and then cleared.</tooltip>
+			</property>
+			<property>
+				<name>Authorization Status</name>
+				<type>STRING</type>
+				<default>Not authorized</default>
+				<readonly>true</readonly>
+			</property>
+
+			<property>
+				<name>Refrigerator</name>
+				<type>LABEL</type>
+				<default>Refrigerator</default>
+			</property>
+			<property>
+				<name>Select Refrigerator</name>
+				<type>LIST</type>
+				<items>
+					<item>(run Discover Refrigerators)</item>
+				</items>
+				<default>(run Discover Refrigerators)</default>
+				<readonly>false</readonly>
+			</property>
+			<property>
+				<name>Device ID</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>false</readonly>
+				<tooltip>SmartThings deviceId. Filled automatically when a refrigerator is selected.</tooltip>
+			</property>
+			<property>
+				<name>Model</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Supported Features</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Poll Interval (minutes)</name>
+				<type>RANGED_INTEGER</type>
+				<minimum>1</minimum>
+				<maximum>60</maximum>
+				<default>2</default>
+				<readonly>false</readonly>
+			</property>
+			<property>
+				<name>Door Open Alert (minutes)</name>
+				<type>RANGED_INTEGER</type>
+				<minimum>0</minimum>
+				<maximum>60</maximum>
+				<default>5</default>
+				<readonly>false</readonly>
+				<tooltip>Fire 'Door Left Open' when a door stays open this long (0 = off). Detection resolution is the poll interval.</tooltip>
+			</property>
+
+			<property>
+				<name>Status</name>
+				<type>LABEL</type>
+				<default>Status</default>
+			</property>
+			<property>
+				<name>Connection</name>
+				<type>STRING</type>
+				<default>Unknown</default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Power Cool</name>
+				<type>STRING</type>
+				<default>Unknown</default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Power Freeze</name>
+				<type>STRING</type>
+				<default>Unknown</default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Sabbath Mode</name>
+				<type>STRING</type>
+				<default>Unknown</default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Ice Maker</name>
+				<type>STRING</type>
+				<default>Unknown</default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Fridge Temperature</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Fridge Setpoint</name>
+				<type>LIST</type>
+				<items>
+					<item>Unknown</item>
+				</items>
+				<default>Unknown</default>
+				<readonly>false</readonly>
+				<tooltip>Select a value to change the fridge target temperature.</tooltip>
+			</property>
+			<property>
+				<name>Freezer Temperature</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Freezer Setpoint</name>
+				<type>LIST</type>
+				<items>
+					<item>Unknown</item>
+				</items>
+				<default>Unknown</default>
+				<readonly>false</readonly>
+				<tooltip>Select a value to change the freezer target temperature.</tooltip>
+			</property>
+			<property>
+				<name>FlexZone</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Doors</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Water Filter</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Power</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Energy</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Last Update</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+		</properties>
+		<commands>
+			<command>
+				<name>SET_FEATURE</name>
+				<description>Set NAME PARAM1 PARAM2</description>
+				<params>
+					<param>
+						<name>Feature</name>
+						<type>LIST</type>
+						<items>
+							<item>Sabbath Mode</item>
+							<item>Power Cool</item>
+							<item>Power Freeze</item>
+							<item>Ice Maker</item>
+						</items>
+					</param>
+					<param>
+						<name>State</name>
+						<type>LIST</type>
+						<items>
+							<item>On</item>
+							<item>Off</item>
+							<item>Toggle</item>
+						</items>
+					</param>
+				</params>
+			</command>
+			<command>
+				<name>SET_FRIDGE_TEMPERATURE</name>
+				<description>Set NAME fridge setpoint to PARAM1 (refrigerator's own unit)</description>
+				<params>
+					<param>
+						<name>Temperature</name>
+						<type>RANGED_INTEGER</type>
+						<minimum>-30</minimum>
+						<maximum>50</maximum>
+					</param>
+				</params>
+			</command>
+			<command>
+				<name>SET_FREEZER_TEMPERATURE</name>
+				<description>Set NAME freezer setpoint to PARAM1 (refrigerator's own unit)</description>
+				<params>
+					<param>
+						<name>Temperature</name>
+						<type>RANGED_INTEGER</type>
+						<minimum>-30</minimum>
+						<maximum>50</maximum>
+					</param>
+				</params>
+			</command>
+			<command>
+				<name>RESET_WATER_FILTER</name>
+				<description>Reset NAME water filter usage</description>
+			</command>
+			<command>
+				<name>REFRESH</name>
+				<description>Refresh NAME status from SmartThings</description>
+			</command>
+		</commands>
+		<conditionals>
+			<conditional>
+				<id>1</id>
+				<name>SABBATH_MODE</name>
+				<type>LIST</type>
+				<condition_statement>Sabbath Mode</condition_statement>
+				<description>NAME Sabbath Mode is LOGIC STRING</description>
+				<items>
+					<item>On</item>
+					<item>Off</item>
+				</items>
+			</conditional>
+			<conditional>
+				<id>2</id>
+				<name>CONNECTION</name>
+				<type>LIST</type>
+				<condition_statement>Connection</condition_statement>
+				<description>NAME Connection is LOGIC STRING</description>
+				<items>
+					<item>Online</item>
+					<item>Offline</item>
+				</items>
+			</conditional>
+			<conditional>
+				<id>3</id>
+				<name>POWER_COOL</name>
+				<type>LIST</type>
+				<condition_statement>Power Cool</condition_statement>
+				<description>NAME Power Cool is LOGIC STRING</description>
+				<items>
+					<item>On</item>
+					<item>Off</item>
+				</items>
+			</conditional>
+			<conditional>
+				<id>4</id>
+				<name>POWER_FREEZE</name>
+				<type>LIST</type>
+				<condition_statement>Power Freeze</condition_statement>
+				<description>NAME Power Freeze is LOGIC STRING</description>
+				<items>
+					<item>On</item>
+					<item>Off</item>
+				</items>
+			</conditional>
+			<conditional>
+				<id>5</id>
+				<name>ICE_MAKER</name>
+				<type>LIST</type>
+				<condition_statement>Ice Maker</condition_statement>
+				<description>NAME Ice Maker is LOGIC STRING</description>
+				<items>
+					<item>On</item>
+					<item>Off</item>
+				</items>
+			</conditional>
+			<conditional>
+				<id>6</id>
+				<name>DOOR</name>
+				<type>LIST</type>
+				<condition_statement>Door</condition_statement>
+				<description>NAME Door is LOGIC STRING</description>
+				<items>
+					<item>Open</item>
+					<item>Closed</item>
+				</items>
+			</conditional>
+			<conditional>
+				<id>7</id>
+				<name>WATER_FILTER</name>
+				<type>LIST</type>
+				<condition_statement>Water Filter</condition_statement>
+				<description>NAME Water Filter is LOGIC STRING</description>
+				<items>
+					<item>OK</item>
+					<item>Replace</item>
+				</items>
+			</conditional>
+		</conditionals>
+	</config>
+	<capabilities>
+		<navigator_display_option proxybindingid="5001">
+			<display_icons>
+				<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_70.png</Icon>
+				<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_90.png</Icon>
+				<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_300.png</Icon>
+				<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_512.png</Icon>
+				<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_1024.png</Icon>
+				<state id="on">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/on_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/on_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/on_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/on_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/on_1024.png</Icon>
+				</state>
+				<state id="off">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/off_1024.png</Icon>
+				</state>
+				<state id="pending">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/pending_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/pending_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/pending_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/pending_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/pending_1024.png</Icon>
+				</state>
+				<state id="error">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/error_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/error_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/error_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/error_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/error_1024.png</Icon>
+				</state>
+				<state id="unavailable">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/unavailable_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/unavailable_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/unavailable_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/unavailable_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_cool/unavailable_1024.png</Icon>
+				</state>
+			</display_icons>
+		</navigator_display_option>
+		<navigator_display_option proxybindingid="5002">
+			<display_icons>
+				<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_70.png</Icon>
+				<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_90.png</Icon>
+				<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_300.png</Icon>
+				<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_512.png</Icon>
+				<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_1024.png</Icon>
+				<state id="on">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/on_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/on_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/on_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/on_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/on_1024.png</Icon>
+				</state>
+				<state id="off">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/off_1024.png</Icon>
+				</state>
+				<state id="pending">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/pending_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/pending_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/pending_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/pending_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/pending_1024.png</Icon>
+				</state>
+				<state id="error">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/error_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/error_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/error_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/error_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/error_1024.png</Icon>
+				</state>
+				<state id="unavailable">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/unavailable_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/unavailable_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/unavailable_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/unavailable_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/power_freeze/unavailable_1024.png</Icon>
+				</state>
+			</display_icons>
+		</navigator_display_option>
+		<navigator_display_option proxybindingid="5003">
+			<display_icons>
+				<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_70.png</Icon>
+				<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_90.png</Icon>
+				<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_300.png</Icon>
+				<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_512.png</Icon>
+				<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_1024.png</Icon>
+				<state id="on">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/on_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/on_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/on_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/on_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/on_1024.png</Icon>
+				</state>
+				<state id="off">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/off_1024.png</Icon>
+				</state>
+				<state id="pending">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/pending_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/pending_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/pending_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/pending_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/pending_1024.png</Icon>
+				</state>
+				<state id="error">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/error_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/error_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/error_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/error_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/error_1024.png</Icon>
+				</state>
+				<state id="unavailable">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/unavailable_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/unavailable_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/unavailable_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/unavailable_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/sabbath/unavailable_1024.png</Icon>
+				</state>
+			</display_icons>
+		</navigator_display_option>
+		<navigator_display_option proxybindingid="5004">
+			<display_icons>
+				<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_70.png</Icon>
+				<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_90.png</Icon>
+				<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_300.png</Icon>
+				<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_512.png</Icon>
+				<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_1024.png</Icon>
+				<state id="on">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/on_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/on_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/on_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/on_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/on_1024.png</Icon>
+				</state>
+				<state id="off">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/off_1024.png</Icon>
+				</state>
+				<state id="pending">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/pending_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/pending_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/pending_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/pending_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/pending_1024.png</Icon>
+				</state>
+				<state id="error">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/error_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/error_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/error_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/error_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/error_1024.png</Icon>
+				</state>
+				<state id="unavailable">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/unavailable_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/unavailable_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/unavailable_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/unavailable_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Refrigerator/icons/ice_maker/unavailable_1024.png</Icon>
+				</state>
+			</display_icons>
+		</navigator_display_option>
+	</capabilities>
+	<connections>
+		<connection>
+			<id>5001</id>
+			<facing>6</facing>
+			<connectionname>UIBUTTON Power Cool</connectionname>
+			<type>2</type>
+			<consumer>False</consumer>
+			<audiosource>False</audiosource>
+			<videosource>False</videosource>
+			<linelevel>False</linelevel>
+			<classes>
+				<class>
+					<classname>UIBUTTON</classname>
+				</class>
+			</classes>
+		</connection>
+		<connection>
+			<id>5002</id>
+			<facing>6</facing>
+			<connectionname>UIBUTTON Power Freeze</connectionname>
+			<type>2</type>
+			<consumer>False</consumer>
+			<audiosource>False</audiosource>
+			<videosource>False</videosource>
+			<linelevel>False</linelevel>
+			<classes>
+				<class>
+					<classname>UIBUTTON</classname>
+				</class>
+			</classes>
+		</connection>
+		<connection>
+			<id>5003</id>
+			<facing>6</facing>
+			<connectionname>UIBUTTON Sabbath Mode</connectionname>
+			<type>2</type>
+			<consumer>False</consumer>
+			<audiosource>False</audiosource>
+			<videosource>False</videosource>
+			<linelevel>False</linelevel>
+			<classes>
+				<class>
+					<classname>UIBUTTON</classname>
+				</class>
+			</classes>
+		</connection>
+		<connection>
+			<id>5004</id>
+			<facing>6</facing>
+			<connectionname>UIBUTTON Ice Maker</connectionname>
+			<type>2</type>
+			<consumer>False</consumer>
+			<audiosource>False</audiosource>
+			<videosource>False</videosource>
+			<linelevel>False</linelevel>
+			<classes>
+				<class>
+					<classname>UIBUTTON</classname>
+				</class>
+			</classes>
+		</connection>
+		<connection>
+			<id>300</id>
+			<facing>6</facing>
+			<connectionname>Keypad Button: Power Cool</connectionname>
+			<type>1</type>
+			<consumer>False</consumer>
+			<audiosource>False</audiosource>
+			<videosource>False</videosource>
+			<linelevel>False</linelevel>
+			<classes>
+				<class>
+					<classname>BUTTON_LINK</classname>
+					<autobind>False</autobind>
+				</class>
+			</classes>
+			<hidden>False</hidden>
+		</connection>
+		<connection>
+			<id>301</id>
+			<facing>6</facing>
+			<connectionname>Keypad Button: Power Freeze</connectionname>
+			<type>1</type>
+			<consumer>False</consumer>
+			<audiosource>False</audiosource>
+			<videosource>False</videosource>
+			<linelevel>False</linelevel>
+			<classes>
+				<class>
+					<classname>BUTTON_LINK</classname>
+					<autobind>False</autobind>
+				</class>
+			</classes>
+			<hidden>False</hidden>
+		</connection>
+		<connection>
+			<id>302</id>
+			<facing>6</facing>
+			<connectionname>Keypad Button: Sabbath Mode</connectionname>
+			<type>1</type>
+			<consumer>False</consumer>
+			<audiosource>False</audiosource>
+			<videosource>False</videosource>
+			<linelevel>False</linelevel>
+			<classes>
+				<class>
+					<classname>BUTTON_LINK</classname>
+					<autobind>False</autobind>
+				</class>
+			</classes>
+			<hidden>False</hidden>
+		</connection>
+		<connection>
+			<id>303</id>
+			<facing>6</facing>
+			<connectionname>Keypad Button: Ice Maker</connectionname>
+			<type>1</type>
+			<consumer>False</consumer>
+			<audiosource>False</audiosource>
+			<videosource>False</videosource>
+			<linelevel>False</linelevel>
+			<classes>
+				<class>
+					<classname>BUTTON_LINK</classname>
+					<autobind>False</autobind>
+				</class>
+			</classes>
+			<hidden>False</hidden>
+		</connection>
+	</connections>
+	<events>
+		<event><id>1</id><name>Sabbath Mode Turned On</name><description>When NAME Sabbath mode turns On</description></event>
+		<event><id>2</id><name>Sabbath Mode Turned Off</name><description>When NAME Sabbath mode turns Off</description></event>
+		<event><id>3</id><name>Command Failed</name><description>When a NAME command fails or is not confirmed by the refrigerator</description></event>
+		<event><id>4</id><name>Authorization Required</name><description>When NAME loses SmartThings authorization and must be re-authorized</description></event>
+		<event><id>5</id><name>Refrigerator Offline</name><description>When NAME goes offline in SmartThings</description></event>
+		<event><id>6</id><name>Refrigerator Online</name><description>When NAME comes back online in SmartThings</description></event>
+		<event><id>7</id><name>Power Cool Turned On</name><description>When NAME Power Cool turns On</description></event>
+		<event><id>8</id><name>Power Cool Turned Off</name><description>When NAME Power Cool turns Off</description></event>
+		<event><id>9</id><name>Power Freeze Turned On</name><description>When NAME Power Freeze turns On</description></event>
+		<event><id>10</id><name>Power Freeze Turned Off</name><description>When NAME Power Freeze turns Off</description></event>
+		<event><id>11</id><name>Ice Maker Turned On</name><description>When NAME Ice Maker turns On</description></event>
+		<event><id>12</id><name>Ice Maker Turned Off</name><description>When NAME Ice Maker turns Off</description></event>
+		<event><id>13</id><name>Door Opened</name><description>When a NAME door opens (detected at the poll interval)</description></event>
+		<event><id>14</id><name>Door Closed</name><description>When all NAME doors are closed again</description></event>
+		<event><id>15</id><name>Door Left Open</name><description>When a NAME door stays open longer than the Door Open Alert time</description></event>
+		<event><id>16</id><name>Water Filter Needs Replacement</name><description>When NAME reports the water filter needs replacement</description></event>
+		<event><id>17</id><name>Setpoint Changed</name><description>When the NAME fridge or freezer setpoint changes</description></event>
+	</events>
+</devicedata>

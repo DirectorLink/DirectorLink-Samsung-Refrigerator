@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Samsung Refrigerator (DirectorLink)</title>
+<style>
+  body { font-family: Segoe UI, Arial, sans-serif; font-size: 13px; line-height: 1.45; color: #222; margin: 16px; max-width: 860px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  h2 { font-size: 16px; margin-top: 24px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+  h3 { font-size: 14px; margin: 14px 0 4px; }
+  code { background: #f2f2f2; padding: 1px 4px; border-radius: 3px; }
+  table { border-collapse: collapse; margin: 6px 0; }
+  td, th { border: 1px solid #ccc; padding: 4px 8px; text-align: left; vertical-align: top; }
+  th { background: #f2f2f2; }
+  .note { background: #fff7e0; border-left: 4px solid #f0b400; padding: 6px 10px; margin: 10px 0; }
+  .brand { color: #555; margin-top: 0; }
+  .ok { background: #eaf7ea; border-left: 4px solid #3a3; padding: 6px 10px; margin: 10px 0; }
+</style>
+</head>
+<body>
+<h1>Samsung Refrigerator (DirectorLink)</h1>
+<p class="brand">A free, open-source driver by <b>DirectorLink</b>: <code>directorlink.io</code>. Updates, help and bug reports: <code>github.com/IsraelCIL/DirectorLink-Samsung-Refrigerator</code></p>
+<p>Control and monitor Samsung Wi-Fi refrigerators from Control4 through the Samsung SmartThings cloud.
+The driver checks which features your model supports. Anything the model doesn't support shows as <i>Not available</i>.</p>
+
+<table>
+  <tr><th>Feature</th><th>In the Control4 app</th><th>Programming</th></tr>
+  <tr><td>Power Cool (fast cooling)</td><td>Tile, tap to toggle</td><td>On / Off / Toggle, events, conditional</td></tr>
+  <tr><td>Power Freeze (fast freezing)</td><td>Tile, tap to toggle</td><td>On / Off / Toggle, events, conditional</td></tr>
+  <tr><td>Sabbath Mode</td><td>Tile, tap to toggle</td><td>On / Off / Toggle, events, conditional</td></tr>
+  <tr><td>Ice Maker</td><td>Tile, tap to toggle</td><td>On / Off / Toggle, events, conditional</td></tr>
+  <tr><td>Fridge and freezer setpoints</td><td>-</td><td>Set temperature commands, Composer property, variables</td></tr>
+  <tr><td>Temperatures, doors, FlexZone mode</td><td>-</td><td>Door Opened / Closed / Left Open events, variables</td></tr>
+  <tr><td>Water filter</td><td>-</td><td>Needs Replacement event, Reset command</td></tr>
+  <tr><td>Power and energy, online status</td><td>-</td><td>Offline / Online events, variables</td></tr>
+</table>
+
+<h2>Requirements</h2>
+<ul>
+  <li>The refrigerator is on Wi-Fi and added to the homeowner's <b>SmartThings</b> app.</li>
+  <li>The controller has internet access (HTTPS to <code>api.smartthings.com</code>).</li>
+  <li>About 10 minutes, a browser, and the login of the Samsung account the refrigerator is registered to.</li>
+</ul>
+
+<h2>Setup</h2>
+
+<h3>Step 1 - Create a SmartThings Personal Access Token</h3>
+<ol>
+  <li>On a computer, open <code>https://account.smartthings.com/tokens</code>.</li>
+  <li>Sign in with the <b>same Samsung account that the refrigerator is registered to</b> in the SmartThings app.</li>
+  <li>Click <b>Generate new token</b> and give it any name, for example <i>Control4</i>.</li>
+  <li>Under <b>Authorized Scopes</b>, <b>tick every checkbox</b> in these three sections:
+    <b>Devices</b>, <b>Locations</b>, <b>Apps</b>.
+    If in doubt, tick everything on the page. The token is used once and expires after 24 hours.</li>
+  <li>Click <b>Generate token</b> and copy the value, which looks like <code>1a2b3c4d-1111-2222-3333-444455556666</code>.
+      It's shown only once.</li>
+  <li>In Composer, paste it into the <b>Personal Access Token</b> property and click Set.</li>
+</ol>
+<table>
+  <tr><th>Common token mistakes</th><th>What you see</th></tr>
+  <tr><td>No checkboxes ticked</td><td><i>Create app failed: Forbidden</i></td></tr>
+  <tr><td>Only <b>Devices</b> ticked (Apps missing)</td><td><i>Create app failed: Forbidden ... needs ALL Apps scopes</i></td></tr>
+  <tr><td>Token older than 24 hours</td><td><i>Create app failed: Not authorized</i>. Create a new token.</td></tr>
+  <tr><td>Signed in with a different Samsung account</td><td><i>No refrigerators found</i></td></tr>
+</table>
+
+<h3>Step 2 - Create the OAuth app (this creates your Client ID)</h3>
+<p>On the <b>Actions</b> tab click <b>1. Create OAuth App (uses Personal Access Token)</b>.
+<b>OAuth Client ID</b> and <b>OAuth Client Secret</b> fill in by themselves, and <b>Authorization Status</b> says
+<i>OAuth app created</i>.</p>
+<p class="note">There is nothing to look up: the driver creates the Client ID for you.
+SmartThings never shows the secret again, so write both values down.
+If you add the driver again later, paste the same Client ID and Secret instead of creating a new app.</p>
+
+<h3>Step 3 - Authorize (sign in once)</h3>
+<ol>
+  <li>Click <b>2. Show Authorization URL</b>. The link appears on the <b>Lua</b> tab (Lua Output) and in the
+      <b>Authorization URL</b> property.</li>
+  <li>Open it in a browser and sign in with the same Samsung account. Choose the location with the refrigerator, then click <b>Authorize</b>.</li>
+  <li>The browser goes to a page whose address starts with <code>https://httpbin.org/get?code=</code>.
+      Copy the <b>whole address</b> from the address bar.</li>
+  <li><b>Within about a minute</b>, paste it into the <b>Authorization Code</b> property and click Set.
+      Codes expire quickly; if it fails, open the link again.</li>
+</ol>
+<p class="ok"><b>Authorization Status</b> now reads <i>Authorized (OAuth) ... renews automatically</i>.
+From now on, the driver renews its access itself. The Personal Access Token isn't needed anymore.</p>
+
+<h3>Step 4 - Select the refrigerator</h3>
+<p>Discovery runs after authorization. With one refrigerator it is selected for you; otherwise choose it in
+<b>Select Refrigerator</b>. Check <b>Supported Features</b> to see what your model offers.</p>
+
+<h3>Step 5 - Show the tiles in the Control4 app</h3>
+<p>The driver adds four UI buttons: <b>Power Cool</b>, <b>Power Freeze</b>, <b>Sabbath Mode</b> and <b>Ice Maker</b>.
+In Composer, open the room's Navigator settings and make the ones you want visible on a menu (for example Comfort).
+Hide the ones your model doesn't support. Each tile can also be bound to a keypad button (connections
+<i>Keypad Button: ...</i>); the button LED follows the state.</p>
+
+<h3>Tile icons</h3>
+<table>
+  <tr><th>Look</th><th>Meaning</th></tr>
+  <tr><td>Colored ring (gold, cyan, blue, aqua)</td><td>Feature is ON</td></tr>
+  <tr><td>Gray ring</td><td>Feature is OFF</td></tr>
+  <tr><td>White ring with dots</td><td>Command sent, waiting for the refrigerator to confirm (usually about 4 seconds)</td></tr>
+  <tr><td>Red ring with "!"</td><td>Problem: offline, authorization needed, or the last command failed</td></tr>
+  <tr><td>Faded with a slash</td><td>Not supported by this refrigerator model</td></tr>
+</table>
+
+<h2>Programming</h2>
+<table>
+  <tr><th>Type</th><th>Items</th></tr>
+  <tr><td>Commands</td><td><b>Set Feature</b> (Sabbath Mode / Power Cool / Power Freeze / Ice Maker: On / Off / Toggle),
+      <b>Set Fridge Temperature</b>, <b>Set Freezer Temperature</b> (in the refrigerator's own unit, C or F),
+      <b>Reset Water Filter</b>, <b>Refresh</b></td></tr>
+  <tr><td>Events</td><td>&lt;Feature&gt; Turned On / Off, Setpoint Changed, Door Opened, Door Closed, Door Left Open,
+      Water Filter Needs Replacement, Refrigerator Offline / Online, Command Failed, Authorization Required</td></tr>
+  <tr><td>Conditionals</td><td>Sabbath Mode / Power Cool / Power Freeze / Ice Maker is On/Off; Door is Open/Closed;
+      Connection is Online/Offline; Water Filter is OK/Replace</td></tr>
+  <tr><td>Variables</td><td>SABBATH_MODE, POWER_COOL, POWER_FREEZE, ICE_MAKER, ONLINE, DOOR_OPEN (bool);
+      FRIDGE_TEMP, FREEZER_TEMP, FRIDGE_SETPOINT, FREEZER_SETPOINT, POWER_W, WATER_FILTER_USAGE (number)</td></tr>
+</table>
+<h3>Examples</h3>
+<ul>
+  <li><b>Shabbat:</b> Scheduler event Friday at sunset minus 30 minutes runs <i>Set Feature Sabbath Mode On</i>.
+      Saturday at sunset plus 60 minutes runs <i>Sabbath Mode Off</i>. Add a push notification on <i>Command Failed</i>.</li>
+  <li><b>Groceries:</b> a keypad button runs <i>Power Cool On</i>. The refrigerator turns it off by itself when done.</li>
+  <li><b>Door alarm:</b> on <i>Door Left Open</i>, send a notification or flash a light.</li>
+</ul>
+<p class="note">Commands go through the Samsung cloud, so they need internet. Doors and temperatures are polled
+(default every 2 minutes), so door events can be delayed by up to the poll interval.
+Changes made on the refrigerator itself also show up in Control4.</p>
+
+<h2>Properties</h2>
+<table>
+  <tr><th>Property</th><th>Description</th></tr>
+  <tr><td>Driver Status</td><td>Overall status / last error.</td></tr>
+  <tr><td>Debug Mode</td><td>On prints SmartThings traffic on the Lua tab. Tokens and secrets are never printed.</td></tr>
+  <tr><td>OAuth Redirect URI</td><td>Must match the URI registered on the OAuth app (default <code>https://httpbin.org/get</code>).</td></tr>
+  <tr><td>Poll Interval (minutes)</td><td>How often status is read (1-60, default 2).</td></tr>
+  <tr><td>Door Open Alert (minutes)</td><td>When <i>Door Left Open</i> fires (0 = off, default 5).</td></tr>
+  <tr><td>Fridge / Freezer Setpoint</td><td>Pick a value to change the target temperature. The allowed range comes from the refrigerator.</td></tr>
+  <tr><td>Status section</td><td>Live values: connection, features, temperatures, doors, FlexZone, water filter, power, energy.</td></tr>
+</table>
+
+<h2>Troubleshooting</h2>
+<ul>
+  <li><b>Create app failed</b>: see the token mistakes table in Step 1.</li>
+  <li><b>Authorization failed</b>: the code expired or was already used. Open the link again and paste the new address quickly.</li>
+  <li><b>Re-authorization required</b>: SmartThings rejected the saved token, for example after about 30 days with the controller offline,
+      or after access was removed in the SmartThings app. Repeat Step 3. Steps 1-2 aren't needed.</li>
+  <li><b>A feature shows Not available</b>: your model or its firmware doesn't expose it to SmartThings.
+      Check for a refrigerator update in the SmartThings app.</li>
+  <li><b>... was not confirmed by the refrigerator</b>: SmartThings accepted the command but the refrigerator didn't change.
+      Check that it is online in the SmartThings app.</li>
+  <li><b>Rate limited</b>: SmartThings allows about 12 reads per minute per device. Avoid very short poll intervals,
+      and don't fire many commands at once.</li>
+</ul>
+
+<h2>Privacy and security</h2>
+<p>The driver talks only to <code>api.smartthings.com</code>. Tokens are kept in Control4's encrypted storage.
+The Client Secret is a masked property, but anyone with Composer access to the project can read it.
+To revoke access, remove <i>DirectorLink Samsung Refrigerator</i> from the connected services in the SmartThings app,
+or click <b>Sign Out (clear tokens)</b>.</p>
+<h2>Updates</h2>
+<p>Download new versions from the GitHub page above (Releases) and install them with <b>Driver &rarr; Add or Update Driver</b>. The file must be named exactly <code>DirectorLink-Samsung-Refrigerator.c4z</code>. A copy named <code>DirectorLink-Samsung-Refrigerator (1).c4z</code> would be added as a separate driver instead of updating this one, so delete older downloads first.</p>
+<p>Licensed under the Apache License 2.0. Not affiliated with or endorsed by Samsung, SmartThings, Control4 or Snap One.</p>
+</body>
+</html>

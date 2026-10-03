@@ -1,0 +1,12 @@
+DirectorLink Samsung Refrigerator
+Copyright 2026 DirectorLink
+
+Licensed under the Apache License, Version 2.0.
+
+This is an independent open-source project and is not affiliated with or endorsed by Samsung,
+SmartThings, Control4 or Snap One. Samsung, SmartThings, Control4 and related product names are
+trademarks of their respective owners.
+
+The refrigerator test fixtures in tests/fixtures/ come from Home Assistant
+(https://github.com/home-assistant/core, tests/components/smartthings/fixtures),
+Copyright Home Assistant contributors, licensed under the Apache License, Version 2.0.

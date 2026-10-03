@@ -1,0 +1,49 @@
+name: Bug report
+description: Something doesn't work with your refrigerator
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Never paste** your Personal Access Token, the OAuth Client Secret,
+        or an authorization link or code.
+  - type: input
+    id: driver_version
+    attributes:
+      label: Driver Version
+      description: The "Driver Version" property in Composer
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Refrigerator
+      description: The "Model" property in Composer, and the model number on the refrigerator's label (for example RF85T901335ML)
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Control4 OS version
+  - type: textarea
+    id: features
+    attributes:
+      label: Supported Features
+      description: The "Supported Features" property in Composer
+  - type: textarea
+    id: status
+    attributes:
+      label: Driver Status and Authorization Status
+      description: Both properties, as shown in Composer
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Lua output
+      description: Set Debug Mode to On, reproduce the problem, and copy the Lua tab's output. The driver never prints tokens or secrets, but remove anything personal.
+      render: text
