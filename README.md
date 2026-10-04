@@ -8,7 +8,8 @@ Free. No subscription, no license key, no account with us.
 
 Made by [DirectorLink](https://directorlink.io), the open-source management layer for Control4 homes. Works on its own: DirectorLink is not required.
 
-With DirectorLink 1.7.0 or later, it also shows in the DirectorLink app.
+With DirectorLink 1.7.0 or later, it also shows in the DirectorLink app. The app shows only the switches and
+values this refrigerator has, in the right unit.
 
 | Feature | Control4 app | Programming |
 |---|---|---|
@@ -130,6 +131,11 @@ Use them in programming conditions, or read them from other drivers. The ids nev
 
 ## Updating
 
+**Latest version: 1.1.0.** It adds two variables for DirectorLink 1.7 and later, `REPORTED_VARIABLES` and
+`TEMPERATURE_UNIT` (see [Variables](#variables)), so the app shows only the switches and values this refrigerator
+has, in the right unit. Nothing else changes, and existing programming keeps working. The [release notes](../../releases)
+list what changed in every version.
+
 Download the new `DirectorLink-Samsung-Refrigerator.c4z` from the [latest release](../../releases/latest).
 Mind the file name, as described in Installation. Then run **Driver → Add or Update Driver or Agent** in
 Composer Pro. Your settings and sign-in are kept. To go back to an older version, install the `.c4z` from an
@@ -201,7 +207,9 @@ and an existing release is never replaced.
 
 Don't zip with PowerShell 5.1's `Compress-Archive`: it writes backslash paths that break the icons.
 Never change the `.c4z` file name, proxy binding ids, variable order, event and command ids, or property names
-once released, because installed projects and dealers' programming depend on them.
+once released, because installed projects and dealers' programming depend on them. Director numbers variables
+in the order `OnDriverInit` adds them (1001, 1002, …), and DirectorLink reads them by those ids, so new variables
+are only ever added after the last one.
 
 ### SmartThings API used (same as Home Assistant's `smartthings` integration)
 
