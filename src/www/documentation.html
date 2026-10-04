@@ -121,7 +121,10 @@ Hide the ones your model doesn't support. Each feature tile can also be bound to
   <tr><td>Conditionals</td><td>Sabbath Mode / Power Cool / Power Freeze / Ice Maker is On/Off; Door is Open/Closed;
       Connection is Online/Offline; Water Filter is OK/Replace</td></tr>
   <tr><td>Variables</td><td>SABBATH_MODE, POWER_COOL, POWER_FREEZE, ICE_MAKER, ONLINE, DOOR_OPEN (bool);
-      FRIDGE_TEMP, FREEZER_TEMP, FRIDGE_SETPOINT, FREEZER_SETPOINT, POWER_W, WATER_FILTER_USAGE (number)</td></tr>
+      FRIDGE_TEMP, FREEZER_TEMP, FRIDGE_SETPOINT, FREEZER_SETPOINT, POWER_W, WATER_FILTER_USAGE (number);
+      REPORTED_VARIABLES (string: which of these hold a value this refrigerator reports, comma-separated;
+      empty before the first status read, after Sign Out and after another refrigerator is selected);
+      TEMPERATURE_UNIT (string: C or F, the unit of the temperatures and setpoints; empty while unknown)</td></tr>
 </table>
 <h3>Examples</h3>
 <ul>

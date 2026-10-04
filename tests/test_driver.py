@@ -848,6 +848,87 @@ def test_auth_result_pasted_into_wrong_field(rt_mod):
     assert "redirect_uri=https%3A%2F%2Foauth.pstmn.io%2Fv1%2Fcallback" in d.prop("Authorization URL")
 
 
+TWELVE = ["POWER_COOL", "POWER_FREEZE", "SABBATH_MODE", "ICE_MAKER", "ONLINE", "DOOR_OPEN",
+          "FRIDGE_TEMP", "FREEZER_TEMP", "FRIDGE_SETPOINT", "FREEZER_SETPOINT", "POWER_W", "WATER_FILTER_USAGE"]
+
+
+def test_directorlink_variables_come_after_the_twelve(rt_mod):
+    d = Driver(rt_mod, FakeSmartThings())
+    d.init()
+    assert lua_to_py(d.M.varOrder) == TWELVE + ["REPORTED_VARIABLES", "TEMPERATURE_UNIT"]
+    ids = lua_to_py(d.M.varIds)
+    assert [ids[n] for n in TWELVE] == list(range(1001, 1013))          # unchanged ids
+    assert ids["REPORTED_VARIABLES"] == 1013 and ids["TEMPERATURE_UNIT"] == 1014
+    types = lua_to_py(d.M.varTypes)
+    assert types["REPORTED_VARIABLES"] == "STRING" and types["TEMPERATURE_UNIT"] == "STRING"
+    assert d.var("REPORTED_VARIABLES") == "" and d.var("TEMPERATURE_UNIT") == ""   # before the first read
+
+
+def _without_door_sensors(fixture):
+    cloud = FakeSmartThings(fixture)
+    for comp in cloud.status["components"].values():
+        comp.pop("contactSensor", None)
+    return cloud
+
+
+def test_reported_variables_per_model(rt_mod):
+    cases = [
+        # full TP2X (same family as RF85T), all twelve, °F
+        ("da_ref_normal_000001", None, TWELVE, "F"),
+        # Family Hub with Sabbath mode disabled
+        ("da_ref_normal_01001", None, [n for n in TWELVE if n != "SABBATH_MODE"], "F"),
+        # one-door model: no freezer, no Power Freeze / Sabbath / ice maker / water filter, °C
+        ("da_ref_normal_01011_onedoor", None,
+         ["POWER_COOL", "ONLINE", "DOOR_OPEN", "FRIDGE_TEMP", "FRIDGE_SETPOINT", "POWER_W"], "C"),
+        # older dongle model without door sensors: Power Cool (rapidCooling) and the fridge setpoint, °C
+        ("da_ref_normal_100001", _without_door_sensors, ["POWER_COOL", "ONLINE", "FRIDGE_SETPOINT"], "C"),
+    ]
+    for fixture, make_cloud, expected, unit in cases:
+        cloud = make_cloud(fixture) if make_cloud else FakeSmartThings(fixture)
+        d = Driver(rt_mod, cloud)
+        d.init()
+        d.set_property("Personal Access Token", PAT)
+        d.action("DiscoverDevices")
+        assert d.prop("Driver Status") == "OK", (fixture, d.prop("Driver Status"))
+        assert d.var("REPORTED_VARIABLES") == ",".join(expected), (fixture, d.var("REPORTED_VARIABLES"))
+        assert d.var("TEMPERATURE_UNIT") == unit, (fixture, d.var("TEMPERATURE_UNIT"))
+    # the no-door model really has no door: Doors says so and DOOR_OPEN is not listed
+    assert d.prop("Doors") == "Not available"
+
+
+def test_reported_variables_empty_until_read_after_sign_out_and_device_change(rt_mod):
+    d = Driver(rt_mod, FakeSmartThings())
+    d.init()
+    assert d.var("REPORTED_VARIABLES") == "" and d.var("TEMPERATURE_UNIT") == ""
+    assert (lua_to_py(d.M.varSets) or {}).get("REPORTED_VARIABLES") is None   # never touched
+    d, cloud = configured_driver(rt_mod)
+    assert d.var("REPORTED_VARIABLES") == ",".join(TWELVE) and d.var("TEMPERATURE_UNIT") == "F"
+    d.set_property("Device ID", "another-fridge")                  # another refrigerator
+    assert d.var("REPORTED_VARIABLES") == "" and d.var("TEMPERATURE_UNIT") == ""
+    d.set_property("Device ID", cloud.device_id)                   # back: read again
+    assert d.var("REPORTED_VARIABLES") == ",".join(TWELVE)
+    d.set_property("Personal Access Token", "")                    # setup done, token cleared
+    d.action("SignOut")
+    assert d.var("REPORTED_VARIABLES") == "" and d.var("TEMPERATURE_UNIT") == ""
+    d.advance(5 * 60 * 1000)                                       # polls: not signed in, nothing read
+    assert d.var("REPORTED_VARIABLES") == "" and d.var("TEMPERATURE_UNIT") == ""
+
+
+def test_reported_variables_set_only_on_change(rt_mod):
+    d, cloud = configured_driver(rt_mod)
+    sets = lambda: lua_to_py(d.M.varSets) or {}
+    assert sets()["REPORTED_VARIABLES"] == 1 and sets()["TEMPERATURE_UNIT"] == 1
+    d.advance(3 * 2 * 60 * 1000)                                   # three more polls, nothing changed
+    d.tap(5004)                                                    # a command and its confirmation reads
+    d.advance(15000)
+    assert sets()["REPORTED_VARIABLES"] == 1 and sets()["TEMPERATURE_UNIT"] == 1
+    disabled = cloud.status["components"]["main"]["custom.disabledComponents"]["disabledComponents"]
+    disabled["value"] = (disabled["value"] or []) + ["icemaker"]   # the ice maker goes away
+    d.advance(2 * 60 * 1000)
+    assert d.var("REPORTED_VARIABLES") == ",".join(n for n in TWELVE if n != "ICE_MAKER")
+    assert sets()["REPORTED_VARIABLES"] == 2 and sets()["TEMPERATURE_UNIT"] == 1
+
+
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
 
 

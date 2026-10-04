@@ -107,6 +107,27 @@ Commands go through Samsung's cloud. The driver re-reads the refrigerator after 
 it as done only when the refrigerator confirms, typically in about 4 seconds. If it doesn't confirm, the
 driver fires **Command Failed**.
 
+### Variables
+
+Use them in programming conditions, or read them from other drivers. The ids never change.
+
+| Id | Variable | Type | Meaning |
+|---|---|---|---|
+| 1001 | `POWER_COOL` | bool | Power Cool is on |
+| 1002 | `POWER_FREEZE` | bool | Power Freeze is on |
+| 1003 | `SABBATH_MODE` | bool | Sabbath Mode is on |
+| 1004 | `ICE_MAKER` | bool | The ice maker is on |
+| 1005 | `ONLINE` | bool | The refrigerator is online in SmartThings |
+| 1006 | `DOOR_OPEN` | bool | A door is open |
+| 1007 | `FRIDGE_TEMP` | number | Fridge temperature, in the refrigerator's unit |
+| 1008 | `FREEZER_TEMP` | number | Freezer temperature, in the refrigerator's unit |
+| 1009 | `FRIDGE_SETPOINT` | number | Fridge setpoint, in the refrigerator's unit |
+| 1010 | `FREEZER_SETPOINT` | number | Freezer setpoint, in the refrigerator's unit |
+| 1011 | `POWER_W` | number | Power draw in watts |
+| 1012 | `WATER_FILTER_USAGE` | number | Water filter used, in percent |
+| 1013 | `REPORTED_VARIABLES` | string | Which of the variables above hold a value this refrigerator reports, comma-separated, for example `POWER_COOL,ONLINE,FRIDGE_TEMP`. Variables for features it doesn't have stay at `0` and aren't listed. Empty before the first status read, after Sign Out, and after another refrigerator is selected. |
+| 1014 | `TEMPERATURE_UNIT` | string | `C` or `F`: the unit of the temperatures and setpoints. Empty while unknown. |
+
 ## Updating
 
 Download the new `DirectorLink-Samsung-Refrigerator.c4z` from the [latest release](../../releases/latest).

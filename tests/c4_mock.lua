@@ -40,11 +40,20 @@ end
 function C4:SetPropertyAttribs() end
 function C4:AddVariable(n, v, t, ro, hidden)
   assert(MOCK.inInit, "AddVariable must be called in OnDriverInit")
+  -- Director numbers a driver's variables in the order they are added, from 1001.
+  MOCK.varOrder = MOCK.varOrder or {}
+  MOCK.varOrder[#MOCK.varOrder + 1] = n
+  MOCK.varIds = MOCK.varIds or {}
+  MOCK.varIds[n] = 1000 + #MOCK.varOrder
+  MOCK.varTypes = MOCK.varTypes or {}
+  MOCK.varTypes[n] = t
   MOCK.vars[n] = v
-  return true
+  return MOCK.varIds[n], true
 end
 function C4:SetVariable(n, v)
   assert(type(v) == "string", "SetVariable value must be a string")
+  MOCK.varSets = MOCK.varSets or {}
+  MOCK.varSets[n] = (MOCK.varSets[n] or 0) + 1
   MOCK.vars[n] = v
 end
 function C4:FireEvent(n) MOCK.events[#MOCK.events + 1] = n end

@@ -1106,6 +1106,61 @@ local function supportedFeatureList(res)
   return #names > 0 and table.concat(names, ", ") or "None"
 end
 
+-- REPORTED_VARIABLES: the variables (of the twelve) that hold a value this refrigerator reports,
+-- comma-separated in id order. A feature shown as "Not available", a zone without a temperature or
+-- setpoint, a missing door sensor or water filter keeps its variable at "0" and is not listed.
+local function reportedVariables(res)
+  local names = {}
+  for _, f in ipairs(FEATURES) do
+    if res.features[f.key].supported then names[#names + 1] = f.var end
+  end
+  if gState.online ~= nil then names[#names + 1] = "ONLINE" end
+  if #res.doors > 0 then names[#names + 1] = "DOOR_OPEN" end
+  for _, sp in ipairs(SETPOINTS) do
+    if res.setpoints[sp.key].temp ~= nil then names[#names + 1] = sp.tempVar end
+  end
+  for _, sp in ipairs(SETPOINTS) do
+    if res.setpoints[sp.key].supported then names[#names + 1] = sp.var end
+  end
+  if res.powerW then names[#names + 1] = "POWER_W" end
+  if res.filter and res.filter.usage ~= nil then names[#names + 1] = "WATER_FILTER_USAGE" end
+  return table.concat(names, ",")
+end
+
+-- TEMPERATURE_UNIT: "C" or "F", the unit the refrigerator gives with its temperatures and
+-- setpoints; "" when it does not say.
+local function temperatureUnit(res)
+  for _, sp in ipairs(SETPOINTS) do
+    local r = res.setpoints[sp.key]
+    for _, unit in ipairs({ r.unit, r.tempUnit }) do
+      if unit == "C" or unit == "F" then return unit end
+    end
+  end
+  return ""
+end
+
+-- Last values set on the two variables (AddVariable starts them at ""); set only on change.
+local gPublished = { REPORTED_VARIABLES = "", TEMPERATURE_UNIT = "" }
+
+local function publishVariable(name, value)
+  if gPublished[name] ~= value then
+    gPublished[name] = value
+    setVar(name, value)
+  end
+end
+
+-- After each status read (and its health read, which decides ONLINE).
+local function publishReported(res)
+  publishVariable("REPORTED_VARIABLES", reportedVariables(res))
+  publishVariable("TEMPERATURE_UNIT", temperatureUnit(res))
+end
+
+-- Before the first read, after Sign Out and when another refrigerator is selected.
+local function clearReported()
+  publishVariable("REPORTED_VARIABLES", "")
+  publishVariable("TEMPERATURE_UNIT", "")
+end
+
 function ApplyStatus(res)
   local changed = false
   for _, f in ipairs(FEATURES) do
@@ -1184,6 +1239,7 @@ function RefreshStatus(cb, skipHealth)
       ApplyStatus(res)
       gState.refreshError = nil
       if skipHealth then
+        publishReported(res)
         refreshSummary()
         UpdateUI()
         if cb then cb(true) end
@@ -1196,6 +1252,7 @@ function RefreshStatus(cb, skipHealth)
         elseif state == "OFFLINE" then
           applyHealth(false)
         end
+        publishReported(res)
         refreshSummary()
         UpdateUI()
         if cb then cb(true) end
@@ -1613,6 +1670,7 @@ local function resetDeviceState()
   gState.online, gState.doorOpen, gState.doorOpenSince, gState.doorAlerted = nil, nil, nil, false
   gState.filterStatus, gState.statusRead = nil, false
   persistSet(PERSIST_LAST, {}, false)
+  clearReported()   -- nothing reported until this refrigerator's status is read
 end
 
 ------------------------------------------------------------------------------
@@ -1712,6 +1770,7 @@ ACTIONS = {
   RenewToken = function() RenewToken() end,
   SignOut = function()
     clearTokens(nil)
+    clearReported()
     setDriverStatus("Signed out")
   end,
 }
@@ -1825,6 +1884,11 @@ function OnDriverInit(strDIT)
   C4:AddVariable("FREEZER_SETPOINT", "0", "NUMBER", true, false)
   C4:AddVariable("POWER_W", "0", "NUMBER", true, false)
   C4:AddVariable("WATER_FILTER_USAGE", "0", "NUMBER", true, false)
+  -- Added after the twelve above, so their ids (1001-1012) never move. For drivers that read
+  -- the variables (DirectorLink 1.7+): which of the twelve hold a value this refrigerator
+  -- reports, and the unit of its temperatures. Both stay "" until the first status read.
+  C4:AddVariable("REPORTED_VARIABLES", "", "STRING", true, false)   -- id 1013
+  C4:AddVariable("TEMPERATURE_UNIT", "", "STRING", true, false)     -- id 1014
 end
 
 function OnDriverLateInit(strDIT)
