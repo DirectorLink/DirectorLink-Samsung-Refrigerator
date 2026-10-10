@@ -8,6 +8,8 @@ Free. No subscription, no license key, no account with us.
 
 Made by [DirectorLink](https://directorlink.io), the open-source management layer for Control4 homes. Works on its own: DirectorLink is not required.
 
+DirectorLink is an independent project, not affiliated with Control4 or Snap One.
+
 With DirectorLink 1.7.0 or later, it also shows in the DirectorLink app. The app shows only the switches and
 values this refrigerator has, in the right unit.
 
@@ -131,9 +133,9 @@ Use them in programming conditions, or read them from other drivers. The ids nev
 
 ## Updating
 
-**Latest version: 1.1.0.** It adds two variables for DirectorLink 1.7 and later, `REPORTED_VARIABLES` and
+**Latest version: 1.1.1.** Version 1.1.0 added two variables for DirectorLink 1.7 and later, `REPORTED_VARIABLES` and
 `TEMPERATURE_UNIT` (see [Variables](#variables)), so the app shows only the switches and values this refrigerator
-has, in the right unit. Nothing else changes, and existing programming keeps working. The [release notes](../../releases)
+has, in the right unit. Nothing else changed, and existing programming keeps working. The [release notes](../../releases)
 list what changed in every version.
 
 Download the new `DirectorLink-Samsung-Refrigerator.c4z` from the [latest release](../../releases/latest).
